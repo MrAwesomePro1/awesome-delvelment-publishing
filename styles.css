@@ -257,6 +257,22 @@ h1 {
   font-size: 0.84rem;
 }
 
+.redeem-notice {
+  margin: 0 0 22px;
+  border: 1px solid #34a853;
+  border-radius: 8px;
+  background: rgba(52, 168, 83, 0.12);
+  color: #1e7d3c;
+  padding: 14px 16px;
+  font-weight: 900;
+}
+
+.redeem-notice.is-error {
+  border-color: #d6456b;
+  background: rgba(214, 69, 107, 0.1);
+  color: #a92f4d;
+}
+
 .account-folder {
   margin: 0 0 22px;
   border: 1px solid #b8a24b;
@@ -1412,6 +1428,34 @@ h1 {
   font-size: 1rem;
   line-height: 1.25;
   word-break: break-word;
+}
+
+.app-link-result {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  border: 1px solid #b8a24b;
+  border-radius: 8px;
+  background: #fff8d7;
+  padding: 14px;
+}
+
+.app-link-result[hidden] {
+  display: none;
+}
+
+.app-link-result > span {
+  color: #6f5600;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.app-link-result > a {
+  color: var(--accent-strong);
+  font-weight: 800;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .wallet-actions {

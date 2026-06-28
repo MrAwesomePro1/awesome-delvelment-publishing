@@ -21,6 +21,23 @@ const folderEmail = document.querySelector("[data-folder-email]");
 const folderItems = document.querySelector("[data-folder-items]");
 const folderEmpty = document.querySelector("[data-folder-empty]");
 const signOutButton = document.querySelector("[data-sign-out]");
+const redeemNotice = document.querySelector("[data-redeem-notice]");
+const appCodeParameter = "appcode";
+const appPassLengthMs = 12 * 7 * 24 * 60 * 60 * 1000;
+const sourceCodeLinks = {
+  awesomecraft: "https://github.com/MrAwesomePro1/awesome-delvelment-publishing/tree/main/awesomecraft",
+  viders: "https://github.com/MrAwesomePro1/awesome-delvelment-publishing/tree/main/viders",
+  "rewards-pass": "https://github.com/MrAwesomePro1/awesome-delvelment-publishing/blob/main/rewards.html",
+  "the-demons": "https://github.com/MrAwesomePro1/awesome-delvelment-publishing/tree/main/the-demons",
+  "snake-progect": "https://github.com/MrAwesomePro1/awesome-delvelment-publishing/blob/main/awesomecraft/snake.html",
+  "bank-rupt-street": "https://github.com/MrAwesomePro1/awesome-delvelment-publishing/tree/main/bank-rupt-street",
+  "ai-council": "https://github.com/MrAwesomePro1/awesome-delvelment-publishing/tree/main/ai-council",
+  "staff-messages": "https://github.com/MrAwesomePro1/awesome-delvelment-publishing/tree/main/staff-messages",
+  "awesome-stafftime": "https://github.com/MrAwesomePro1/awesome-delvelment-publishing/tree/main/staff-time",
+  "starfall-jester": "https://github.com/MrAwesomePro1/awesome-delvelment-publishing/tree/main/starfall-jester",
+  "viders-parents": "https://github.com/MrAwesomePro1/awesome-delvelment-publishing/blob/main/viders/parents.html",
+  "pro-one-short-master": "https://github.com/MrAwesomePro1/awesome-delvelment-publishing"
+};
 
 let activeFilter = "all";
 let accountMode = "login";
@@ -276,8 +293,152 @@ function setupFolderActions() {
   });
 }
 
+function setupSourceCodeLinks() {
+  cards.forEach((card) => {
+    const details = getCardDetails(card);
+    const actions = card.querySelector(".actions");
+    const sourceHref = sourceCodeLinks[details.id];
+
+    if (!actions || !sourceHref || actions.querySelector("[data-source-code]")) {
+      return;
+    }
+
+    const link = document.createElement("a");
+    link.className = "secondary-action";
+    link.href = sourceHref;
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.dataset.sourceCode = "";
+    link.textContent = "Code";
+    link.setAttribute("aria-label", `View ${details.name} source code`);
+    actions.append(link);
+  });
+}
+
+function setRedeemNotice(message, isError = false) {
+  redeemNotice.textContent = message;
+  redeemNotice.hidden = !message;
+  redeemNotice.classList.toggle("is-error", isError);
+}
+
+function decodeAppCode(token) {
+  try {
+    const base64 = token.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+    const payload = JSON.parse(window.atob(padded));
+    const issuedAt = Number(payload?.issuedAt) || 0;
+    const expiresAt = Number(payload?.expiresAt) || 0;
+
+    if (
+      payload?.v !== 1 ||
+      typeof payload?.id !== "string" ||
+      payload.id.length < 8 ||
+      payload.id.length > 100 ||
+      typeof payload?.appId !== "string" ||
+      issuedAt > Date.now() + 5 * 60 * 1000 ||
+      expiresAt <= Date.now()
+    ) {
+      return null;
+    }
+
+    return { ...payload, issuedAt, expiresAt };
+  } catch (error) {
+    return null;
+  }
+}
+
+function activateMembershipFromAppCode(codeId) {
+  let rewards = {};
+
+  try {
+    rewards = JSON.parse(localStorage.getItem(membershipStorageKey)) || {};
+  } catch (error) {
+    rewards = {};
+  }
+
+  rewards.claimed = rewards.claimed && typeof rewards.claimed === "object" ? rewards.claimed : {};
+  rewards.claimed.pass = rewards.claimed.pass || `AWESOME-APP-LINK-${codeId}`;
+  rewards.passExpiresAt = Math.max(Date.now(), Number(rewards.passExpiresAt) || 0) + appPassLengthMs;
+  localStorage.setItem(membershipStorageKey, JSON.stringify(rewards));
+}
+
+function clearAppCodeFromUrl() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete(appCodeParameter);
+  window.history.replaceState({}, "", url);
+}
+
+function redeemAppCodeFromLocation() {
+  const token = new URLSearchParams(window.location.search).get(appCodeParameter);
+  if (!token) {
+    return false;
+  }
+
+  const payload = decodeAppCode(token);
+  if (!payload) {
+    setRedeemNotice("This app code is invalid or expired.", true);
+    clearAppCodeFromUrl();
+    return false;
+  }
+
+  const availableApps = new Map(cards.map((card) => {
+    const details = getCardDetails(card);
+    return [details.id, details];
+  }));
+
+  if (payload.appId !== "all-apps" && !availableApps.has(payload.appId)) {
+    setRedeemNotice("This app code does not match an available app.", true);
+    clearAppCodeFromUrl();
+    return false;
+  }
+
+  const account = getSignedInAccount();
+  if (!account) {
+    setRedeemNotice("Log in to redeem this app code.");
+    openAccountDialog("login");
+    return false;
+  }
+
+  const accounts = readAccounts();
+  const savedAccount = accounts[account.email];
+  const redeemedCodes = new Set(savedAccount.redeemedCodes || []);
+
+  if (redeemedCodes.has(payload.id)) {
+    setRedeemNotice("This app code was already used by this account.", true);
+    clearAppCodeFromUrl();
+    return false;
+  }
+
+  const appIds = payload.appId === "all-apps" ? [...availableApps.keys()] : [payload.appId];
+  const folderAppIds = new Set(savedAccount.folderItems || []);
+  const unlockedAppIds = new Set(savedAccount.unlockedApps || []);
+
+  appIds.forEach((appId) => {
+    folderAppIds.add(appId);
+    unlockedAppIds.add(appId);
+  });
+  redeemedCodes.add(payload.id);
+
+  savedAccount.folderItems = [...folderAppIds];
+  savedAccount.unlockedApps = [...unlockedAppIds];
+  savedAccount.redeemedCodes = [...redeemedCodes].slice(-100);
+  writeAccounts(accounts);
+
+  if (payload.appId === "the-demons" || payload.appId === "all-apps") {
+    activateMembershipFromAppCode(payload.id);
+  }
+
+  const appName = payload.appId === "all-apps" ? "All apps" : availableApps.get(payload.appId).name;
+  clearAppCodeFromUrl();
+  updateMembershipApps();
+  renderAccountFolder();
+  setRedeemNotice(`${appName} unlocked and added to your folder.`);
+  return true;
+}
+
 function activateAccount(email) {
   localStorage.setItem(accountSessionKey, email);
+  redeemAppCodeFromLocation();
   renderAccountFolder();
   window.dispatchEvent(new Event("awesome-account-change"));
   closeAccountDialog();
@@ -460,6 +621,8 @@ document.addEventListener("visibilitychange", () => {
 });
 
 setupFolderActions();
+setupSourceCodeLinks();
 updateMembershipApps();
 renderAccountFolder();
 updateCards();
+redeemAppCodeFromLocation();

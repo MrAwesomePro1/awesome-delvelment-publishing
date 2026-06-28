@@ -11,6 +11,13 @@
     { id: "pass", label: "100 ADC + 12-week Membership", seconds: 60 * 60, amount: 100, code: "AWESOME-ADC-12WEEK-MEMBER-100" },
     { id: "billion", label: "1 billion ADC", seconds: 100 * yearSeconds, amount: 1000000000, code: "AWESOME-ADC-BILLION" }
   ];
+  const appLinkProducts = {
+    "snake-progect": { name: "Snake Progect", cost: 5 },
+    viders: { name: "Viders", cost: 19 },
+    "the-demons": { name: "THE DEMONS Pass", cost: 100 },
+    "all-apps": { name: "All Apps", cost: 1000000000 }
+  };
+  const appLinkLengthMs = 30 * 24 * 60 * 60 * 1000;
   const finalMilestoneSeconds = milestones[milestones.length - 1].seconds;
 
   const rewardsApp = document.querySelector("[data-rewards-app]");
@@ -27,6 +34,8 @@
         unlimitedClaims: Boolean(saved?.unlimitedClaims),
         bonusWalletCredit: Math.max(0, Number(saved?.bonusWalletCredit) || 0),
         walletSpent: Math.max(0, Number(saved?.walletSpent) || 0),
+        lastAppLink: typeof saved?.lastAppLink === "string" ? saved.lastAppLink : "",
+        lastAppName: typeof saved?.lastAppName === "string" ? saved.lastAppName : "",
         walletHistory: Array.isArray(saved?.walletHistory)
           ? saved.walletHistory.slice(0, 8).map((item) => ({
               ...item,
@@ -57,6 +66,8 @@
         unlimitedClaims: false,
         bonusWalletCredit: 0,
         walletSpent: 0,
+        lastAppLink: "",
+        lastAppName: "",
         walletHistory: []
       };
     }
@@ -140,6 +151,29 @@
     return `AWESOME-ADC-${claimedCount}-${String(walletEarned()).padStart(3, "0")}`;
   }
 
+  function createAppCodeId() {
+    if (window.crypto?.randomUUID) {
+      return window.crypto.randomUUID();
+    }
+
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  function createAppRedeemLink(appId) {
+    const issuedAt = Date.now();
+    const payload = {
+      v: 1,
+      id: createAppCodeId(),
+      appId,
+      issuedAt,
+      expiresAt: issuedAt + appLinkLengthMs
+    };
+    const token = window.btoa(JSON.stringify(payload)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+    const url = new URL("index.html", window.location.href);
+    url.searchParams.set("appcode", token);
+    return url.href;
+  }
+
   function unlockEverything() {
     state.totalSeconds = Math.max(state.totalSeconds, codeUnlockSeconds);
     state.unlimitedClaims = true;
@@ -193,6 +227,8 @@
     const walletSpentLabel = document.querySelector("[data-wallet-spent]");
     const walletCodeLabel = document.querySelector("[data-wallet-code]");
     const walletHistory = document.querySelector("[data-wallet-history]");
+    const appLinkResult = document.querySelector("[data-app-link-result]");
+    const appLinkOutput = document.querySelector("[data-app-link-output]");
     const next = nextReward();
     const earned = signedIn ? walletEarned() : 0;
     const spent = signedIn ? state.walletSpent : 0;
@@ -262,9 +298,19 @@
     walletCodeLabel.textContent = signedIn ? walletCode() : "Log in to view";
 
     document.querySelectorAll("[data-spend-online]").forEach((button) => {
-      const amount = Number(button.dataset.spendOnline);
+      const amount = appLinkProducts[button.dataset.createAppLink]?.cost || Number(button.dataset.spendOnline);
       button.disabled = !signedIn || balance < amount;
     });
+
+    const showAppLink = signedIn && Boolean(state.lastAppLink);
+    appLinkResult.hidden = !showAppLink;
+    if (showAppLink) {
+      appLinkOutput.href = state.lastAppLink;
+      appLinkOutput.textContent = `${state.lastAppName || "App"} redeem link`;
+    } else {
+      appLinkOutput.removeAttribute("href");
+      appLinkOutput.textContent = "";
+    }
 
     if (!signedIn) {
       walletHistory.textContent = "Log in to view ADC activity.";
@@ -372,18 +418,36 @@
       }
     });
 
+    document.querySelector("[data-copy-app-link]").addEventListener("click", async () => {
+      const status = document.querySelector("[data-app-link-copy-status]");
+      if (!isAccountSignedIn() || !state.lastAppLink) {
+        status.textContent = "Create a link first";
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(state.lastAppLink);
+        status.textContent = "Copied";
+      } catch (error) {
+        status.textContent = "Open the link";
+      }
+    });
+
     document.querySelectorAll("[data-spend-online]").forEach((button) => {
       button.addEventListener("click", () => {
-        const amount = Number(button.dataset.spendOnline);
-        if (!isAccountSignedIn() || walletBalance() < amount) {
+        const appId = button.dataset.createAppLink;
+        const product = appLinkProducts[appId];
+        if (!product || !isAccountSignedIn() || walletBalance() < product.cost) {
           return;
         }
 
-        state.walletSpent += amount;
+        state.walletSpent += product.cost;
+        state.lastAppLink = createAppRedeemLink(appId);
+        state.lastAppName = product.name;
         state.walletHistory.unshift({
-          amount,
+          amount: product.cost,
           date: Date.now(),
-          label: `${formatCoins(amount)} used online`
+          label: `${formatCoins(product.cost)} ${product.name} link created`
         });
         state.walletHistory = state.walletHistory.slice(0, 8);
         saveState();

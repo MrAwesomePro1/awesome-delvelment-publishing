@@ -70,12 +70,20 @@
 
         <div class="wallet-panel wallet-spend">
           <p class="eyebrow">Use online</p>
-          <h2>Awesome Coin checkout</h2>
+          <h2>App code links</h2>
           <div class="wallet-spend-grid">
-            <button class="primary-action wallet-spend-button" type="button" data-spend-online="5">Use 5 ADC</button>
-            <button class="primary-action wallet-spend-button" type="button" data-spend-online="19">Use 19 ADC</button>
-            <button class="primary-action wallet-spend-button" type="button" data-spend-online="100">Use 100 ADC</button>
-            <button class="primary-action wallet-spend-button" type="button" data-spend-online="1000000000">Use 1 billion ADC</button>
+            <button class="primary-action wallet-spend-button" type="button" data-spend-online="5" data-create-app-link="snake-progect">Snake link - 5 ADC</button>
+            <button class="primary-action wallet-spend-button" type="button" data-spend-online="19" data-create-app-link="viders">Viders link - 19 ADC</button>
+            <button class="primary-action wallet-spend-button" type="button" data-spend-online="100" data-create-app-link="the-demons">Demons pass link - 100 ADC</button>
+            <button class="primary-action wallet-spend-button" type="button" data-spend-online="1000000000" data-create-app-link="all-apps">All apps link - 1 billion ADC</button>
+          </div>
+          <div class="app-link-result" data-app-link-result hidden>
+            <span>App redeem link</span>
+            <a data-app-link-output target="_blank" rel="noopener"></a>
+            <div class="wallet-actions">
+              <button class="secondary-action compact-action" type="button" data-copy-app-link>Copy link</button>
+              <span data-app-link-copy-status></span>
+            </div>
           </div>
           <div class="wallet-history" data-wallet-history>No ADC spending yet.</div>
           <form class="unlock-form" data-unlock-form>
