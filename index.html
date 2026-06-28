@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -15,12 +15,14 @@
       </a>
 
       <nav class="quick-links" aria-label="Featured apps">
+        <a href="rewards.html">Rewards</a>
         <a href="staff-messages/index.html">Staff Messages</a>
         <a href="staff-time/index.html">StaffTime</a>
         <a href="awesomecraft/">AwesomeCraft</a>
         <a href="viders/">Viders</a>
         <a href="https://www.youtube.com/@Pro-one-short-master-youtube" target="_blank" rel="noopener">Channel</a>
         <a href="bank-rupt-street/">Bank Rupt Street</a>
+        <button class="account-trigger" type="button" data-account-trigger>Log in</button>
       </nav>
     </header>
 
@@ -41,7 +43,29 @@
             </svg>
             <input id="app-search" type="search" autocomplete="off" placeholder="Search games, video, tools">
           </div>
+          <a class="home-wallet-summary" href="rewards.html" aria-label="View Awesome Development Coin rewards">
+            <span>
+              <small>Your Awesome Development Coins</small>
+              <strong data-home-coin-balance>0 ADC</strong>
+            </span>
+            <b>View rewards</b>
+          </a>
         </form>
+      </section>
+
+      <section class="account-folder" data-account-folder hidden aria-live="polite">
+        <div class="account-folder-head">
+          <span class="folder-mark" aria-hidden="true"></span>
+          <div class="account-folder-title">
+            <p class="eyebrow">Account folder</p>
+            <h2>Your Awesome Development Folder</h2>
+            <p data-folder-email></p>
+          </div>
+          <span class="folder-status">Active</span>
+          <button class="secondary-action folder-signout" type="button" data-sign-out>Sign out</button>
+        </div>
+        <div class="folder-shortcuts" data-folder-items></div>
+        <p class="folder-empty" data-folder-empty>Your folder is active. Add apps from below.</p>
       </section>
 
       <section class="controls" aria-label="App filters">
@@ -89,6 +113,44 @@
       </section>
 
       <section class="app-grid" aria-label="All apps">
+        <article class="app-card" data-tags="tool rewards reward pass coins adc awesome development delvelopment billion">
+          <div class="card-media reward-scene" aria-hidden="true">
+            <span class="reward-ticket"></span>
+            <span class="reward-coin one">A</span>
+            <span class="reward-coin two">D</span>
+            <span class="reward-coin three">C</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title-row">
+              <h2>Rewards Pass</h2>
+              <span class="status ready">Ready</span>
+            </div>
+            <p>Earn Awesome Development Coins, including a one-billion-coin reward and a 12-week Membership Pass.</p>
+            <div class="actions">
+              <a class="primary-action" href="rewards.html">Open</a>
+            </div>
+          </div>
+        </article>
+
+        <article class="app-card membership-locked" data-tags="game demons social deduction party membership pass locked" data-membership-app>
+          <div class="card-media demons-scene" aria-hidden="true">
+            <span class="demons-mask"></span>
+            <span class="demons-candle one"></span>
+            <span class="demons-candle two"></span>
+            <span class="membership-lock"></span>
+          </div>
+          <div class="card-body">
+            <div class="card-title-row">
+              <h2>THE DEMONS</h2>
+              <span class="status membership" data-membership-status>Locked</span>
+            </div>
+            <p data-membership-copy>A human social-deduction game available with an active Membership Pass.</p>
+            <div class="actions">
+              <a class="primary-action" data-membership-launch data-app-href="the-demons/" href="rewards.html">Get Pass</a>
+            </div>
+          </div>
+        </article>
+
         <article class="app-card" data-tags="game snake awesomecraft progect project">
           <div class="card-media snake-scene" aria-hidden="true">
             <span></span><span></span><span></span><span></span><span></span>
@@ -245,7 +307,37 @@
     </main>
   </div>
 
+  <dialog class="account-dialog" data-account-dialog aria-labelledby="account-dialog-title">
+    <div class="account-dialog-panel">
+      <header class="account-dialog-head">
+        <div>
+          <p class="eyebrow">Awesome Development Account</p>
+          <h2 id="account-dialog-title" data-account-title>Log in</h2>
+        </div>
+        <button class="dialog-close" type="button" data-account-close aria-label="Close account window">&times;</button>
+      </header>
+
+      <div class="account-modes" role="tablist" aria-label="Account mode">
+        <button class="is-active" type="button" role="tab" aria-selected="true" data-account-mode="login">Log in</button>
+        <button type="button" role="tab" aria-selected="false" data-account-mode="create">Create account</button>
+      </div>
+
+      <form class="account-form" data-account-form novalidate>
+        <label for="account-email">Email</label>
+        <input id="account-email" name="email" type="email" autocomplete="email" required placeholder="you@example.com">
+
+        <label for="account-password">Password</label>
+        <input id="account-password" name="password" type="password" autocomplete="current-password" minlength="6" required placeholder="At least 6 characters">
+
+        <button class="primary-action account-submit" type="submit" data-account-submit>Log in</button>
+        <p class="account-message" data-account-message aria-live="polite"></p>
+      </form>
+
+      <p class="account-local-note">This account and its folder are saved only on this device.</p>
+    </div>
+  </dialog>
+
   <script src="app.js"></script>
+  <script src="rewards.js"></script>
 </body>
 </html>
-

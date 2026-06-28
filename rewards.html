@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Awesome Delvelment Rewards</title>
+  <meta name="description" content="Unlock Awesome Delvelment rewards by using the launcher over time.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell reward-page" data-rewards-app>
+    <header class="topbar" aria-label="Awesome Delvelment">
+      <a class="brand" href="index.html" aria-label="Awesome Delvelment home">
+        <img class="brand-logo" src="assets/awesome-development-logo-nav.png" alt="Awesome Development">
+      </a>
+
+      <nav class="quick-links" aria-label="Featured apps">
+        <a href="index.html">Launcher</a>
+        <a href="staff-messages/index.html">Staff Messages</a>
+        <a href="staff-time/index.html">StaffTime</a>
+        <a href="awesomecraft/">AwesomeCraft</a>
+        <a href="viders/">Viders</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="reward-hero" aria-labelledby="reward-title">
+        <div class="reward-intro">
+          <p class="eyebrow">Awesome Delvelment rewards</p>
+          <h1 id="reward-title">Use the launcher. Unlock rewards.</h1>
+          <p class="subhead">Earn Awesome Development Coins (ADC) at 5 minutes, 10 minutes, 1 hour, and 100 years.</p>
+        </div>
+
+        <section class="reward-tracker" aria-label="Reward progress">
+          <div class="tracker-topline">
+            <span>Active time</span>
+            <strong data-tracker-state>Tracking</strong>
+          </div>
+          <div class="reward-timer" data-total-time>00:00:00</div>
+          <div class="reward-progress" aria-hidden="true">
+            <span data-progress-bar></span>
+          </div>
+          <div class="tracker-meta">
+            <span data-next-reward>Next reward: 5 ADC</span>
+            <button class="secondary-action compact-action" type="button" data-toggle-tracking>Pause</button>
+          </div>
+        </section>
+      </section>
+
+      <section class="online-wallet" aria-label="Awesome Development Coin Wallet">
+        <div class="wallet-panel wallet-main">
+          <div class="tracker-topline">
+            <span>Awesome Development Coin Wallet</span>
+            <strong>ADC rewards</strong>
+          </div>
+          <div class="wallet-balance" data-wallet-balance>0 ADC</div>
+          <div class="wallet-stats">
+            <span data-wallet-earned>Earned: 0 ADC</span>
+            <span data-wallet-spent>Used online: 0 ADC</span>
+          </div>
+          <div class="wallet-code-box">
+            <span>ADC redeem code</span>
+            <strong data-wallet-code>Claim rewards to unlock</strong>
+          </div>
+          <div class="wallet-actions">
+            <button class="secondary-action compact-action" type="button" data-copy-wallet-code>Copy code</button>
+            <span data-wallet-copy-status></span>
+          </div>
+        </div>
+
+        <div class="wallet-panel wallet-spend">
+          <p class="eyebrow">Use online</p>
+          <h2>Awesome Coin checkout</h2>
+          <div class="wallet-spend-grid">
+            <button class="primary-action wallet-spend-button" type="button" data-spend-online="5">Use 5 ADC</button>
+            <button class="primary-action wallet-spend-button" type="button" data-spend-online="19">Use 19 ADC</button>
+            <button class="primary-action wallet-spend-button" type="button" data-spend-online="100">Use 100 ADC</button>
+            <button class="primary-action wallet-spend-button" type="button" data-spend-online="1000000000">Use 1 billion ADC</button>
+          </div>
+          <div class="wallet-history" data-wallet-history>No ADC spending yet.</div>
+          <form class="unlock-form" data-unlock-form>
+            <label for="unlock-code">Unlock code</label>
+            <div class="unlock-row">
+              <input id="unlock-code" data-unlock-code type="password" inputmode="numeric" autocomplete="off" placeholder="Code">
+              <button class="secondary-action compact-action" type="submit">Unlock</button>
+            </div>
+            <p class="unlock-status" data-unlock-status>Enter 2017 to unlock everything.</p>
+          </form>
+        </div>
+      </section>
+
+      <section class="reward-grid" aria-label="Rewards">
+        <article class="reward-tier" data-reward-card="five">
+          <div class="reward-tier-head">
+            <span class="reward-amount">5 ADC</span>
+            <span class="reward-state" data-reward-status="five">Locked</span>
+          </div>
+          <h2>5 minute reward</h2>
+          <p>Use Awesome Delvelment for 5 minutes.</p>
+          <button class="primary-action reward-button" type="button" data-claim-reward="five">Claim</button>
+          <p class="reward-code" data-reward-code="five" hidden></p>
+        </article>
+
+        <article class="reward-tier" data-reward-card="nineteen">
+          <div class="reward-tier-head">
+            <span class="reward-amount">19 ADC</span>
+            <span class="reward-state" data-reward-status="nineteen">Locked</span>
+          </div>
+          <h2>10 minute reward</h2>
+          <p>Use Awesome Delvelment for 10 minutes.</p>
+          <button class="primary-action reward-button" type="button" data-claim-reward="nineteen">Claim</button>
+          <p class="reward-code" data-reward-code="nineteen" hidden></p>
+        </article>
+
+        <article class="reward-tier pass-tier" data-reward-card="pass">
+          <div class="reward-tier-head">
+            <span class="reward-amount">100 ADC</span>
+            <span class="reward-state" data-reward-status="pass">Locked</span>
+          </div>
+          <h2>12-week Membership Pass</h2>
+          <p>Use Awesome Delvelment for 1 hour to unlock 100 ADC and a 12-week membership.</p>
+          <button class="primary-action reward-button" type="button" data-claim-reward="pass">Claim</button>
+          <p class="reward-code" data-reward-code="pass" hidden></p>
+        </article>
+
+        <article class="reward-tier billion-tier" data-reward-card="billion">
+          <div class="reward-tier-head">
+            <span class="reward-amount">1,000,000,000 ADC</span>
+            <span class="reward-state" data-reward-status="billion">Locked</span>
+          </div>
+          <h2>Billion Coin reward</h2>
+          <p>Use Awesome Delvelment for 100 years to earn one billion Awesome Development Coins.</p>
+          <button class="primary-action reward-button" type="button" data-claim-reward="billion">Claim</button>
+          <p class="reward-code" data-reward-code="billion" hidden></p>
+        </article>
+      </section>
+
+      <section class="pass-preview" aria-label="12-week Membership Pass">
+        <div>
+          <p class="eyebrow">Membership reward</p>
+          <h2>12-week Membership Pass</h2>
+          <p>The membership activates for 12 weeks after the 1 hour reward is claimed.</p>
+        </div>
+        <div class="pass-card" data-pass-card>
+          <span>Awesome Delvelopment</span>
+          <strong>MEMBER</strong>
+          <small data-pass-code>12 weeks locked</small>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="rewards.js"></script>
+</body>
+</html>

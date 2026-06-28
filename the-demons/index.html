@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>THE DEMONS</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="membershipGate" class="membership-gate" hidden>
+      <section class="membership-gate-panel" aria-labelledby="membership-title">
+        <div class="membership-gate-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <rect x="4" y="10" width="16" height="11" rx="2"></rect>
+            <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+            <circle cx="12" cy="15" r="1"></circle>
+          </svg>
+        </div>
+        <p class="eyebrow">Awesome Development Membership</p>
+        <h2 id="membership-title">Membership Pass Required</h2>
+        <p>THE DEMONS is locked until an active 12-week Membership Pass is available.</p>
+        <div class="membership-gate-actions">
+          <a class="gate-primary" href="../Awesome%20Delvelment/rewards.html">Get Membership Pass</a>
+          <a class="gate-secondary" href="../Awesome%20Delvelment/index.html">Back to Launcher</a>
+        </div>
+      </section>
+    </div>
+
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <div class="brandmark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="img">
+              <path d="M14 18c8-7 28-7 36 0v18c0 12-8 20-18 22-10-2-18-10-18-22V18Z"></path>
+              <path d="M23 31c3-3 7-3 10 0M41 31c-3-3-7-3-10 0"></path>
+              <path d="M24 43c5 3 11 3 16 0"></path>
+              <path d="M16 21c8 5 24 5 32 0"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="eyebrow">Hidden team game</p>
+            <h1>THE DEMONS</h1>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button id="privacyBtn" class="icon-button ghost" type="button" data-action="toggle-private" title="Reveal or hide your private role">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            <span>Role</span>
+          </button>
+          <button class="icon-button ghost" type="button" data-action="restart" title="New match">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+              <path d="M3 3v6h6"></path>
+            </svg>
+            <span>New</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="game-layout">
+        <section class="table-zone" aria-label="Game table">
+          <div class="score-row">
+            <div class="score-chip">
+              <span>Round</span>
+              <strong id="roundStat">-</strong>
+            </div>
+            <div class="score-chip">
+              <span>Phase</span>
+              <strong id="phaseStat">Setup</strong>
+            </div>
+            <div class="score-chip">
+              <span>Active</span>
+              <strong id="aliveStat">-</strong>
+            </div>
+            <div class="score-chip">
+              <span>Out</span>
+              <strong id="outStat">-</strong>
+            </div>
+          </div>
+
+          <div class="table-scene" aria-hidden="true">
+            <svg viewBox="0 0 760 220" role="img">
+              <path class="cloth" d="M95 112c44-57 526-57 570 0 24 31-5 82-61 95-80 19-368 19-448 0-56-13-85-64-61-95Z"></path>
+              <path class="rim" d="M134 121c38-40 454-40 492 0 19 20-2 54-45 63-78 17-324 17-402 0-43-9-64-43-45-63Z"></path>
+              <g class="candles">
+                <path d="M368 59h24v65h-24Z"></path>
+                <path d="M380 36c9 9 10 19 0 28-10-9-9-19 0-28Z"></path>
+                <path d="M331 78h18v48h-18Z"></path>
+                <path d="M340 58c7 7 7 15 0 22-7-7-7-15 0-22Z"></path>
+                <path d="M411 78h18v48h-18Z"></path>
+                <path d="M420 58c7 7 7 15 0 22-7-7-7-15 0-22Z"></path>
+              </g>
+              <g class="center-mask">
+                <path d="M287 142c30-27 156-27 186 0v23c-18 30-57 44-93 44s-75-14-93-44v-23Z"></path>
+                <path d="M332 164c15-11 31-11 45 0M428 164c-15-11-31-11-45 0"></path>
+                <path d="M350 188c19 10 41 10 60 0"></path>
+              </g>
+            </svg>
+            <div id="tableMessage" class="table-message">Set the guest list.</div>
+          </div>
+
+          <div id="playerGrid" class="player-grid" aria-live="polite"></div>
+        </section>
+
+        <aside id="actionPanel" class="action-panel" aria-live="polite"></aside>
+
+        <section class="feed-zone" aria-label="Match notes">
+          <div class="feed-panel">
+            <div class="panel-heading compact">
+              <span class="eyebrow">Notes</span>
+              <h2>Human Decisions</h2>
+            </div>
+            <div id="discussionList" class="discussion-list"></div>
+          </div>
+
+          <div class="feed-panel">
+            <div class="panel-heading compact">
+              <span class="eyebrow">Log</span>
+              <h2>Match Events</h2>
+            </div>
+            <ol id="eventLog" class="event-log"></ol>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="game.js"></script>
+  </body>
+</html>
