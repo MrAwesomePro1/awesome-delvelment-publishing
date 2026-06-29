@@ -1098,6 +1098,13 @@ h1 {
   color: var(--accent-strong);
 }
 
+.secondary-action:disabled {
+  border-color: #b7ad9a;
+  background: #d8d0c1;
+  color: #6f6657;
+  cursor: not-allowed;
+}
+
 .folder-action {
   border-color: #b8a24b;
   background: #fff8d7;
@@ -1461,6 +1468,7 @@ h1 {
 .wallet-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   margin-top: 12px;
   color: var(--accent-strong);
@@ -1573,7 +1581,13 @@ h1 {
   line-height: 1;
 }
 
-.billion-tier .reward-amount {
+.one-million-tier .reward-amount,
+.million-tier .reward-amount,
+.billion-tier .reward-amount,
+.mega-tier .reward-amount,
+.trillion-tier .reward-amount,
+.hundred-trillion-tier .reward-amount,
+.infinite-tier .reward-amount {
   font-size: 1.7rem;
 }
 

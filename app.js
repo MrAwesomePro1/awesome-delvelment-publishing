@@ -3,7 +3,9 @@ const filterButtons = [...document.querySelectorAll("[data-filter]")];
 const cards = [...document.querySelectorAll(".app-card")];
 const emptyState = document.querySelector(".empty-state");
 const membershipApps = [...document.querySelectorAll("[data-membership-app]")];
+const paidApps = [...document.querySelectorAll("[data-paid-app]")];
 const membershipStorageKey = "awesomeDelvelmentRewards";
+const demonsAppId = "the-demons";
 const accountStorageKey = "awesomeDelvelmentAccountsV1";
 const accountSessionKey = "awesomeDelvelmentSessionV1";
 const accountTrigger = document.querySelector("[data-account-trigger]");
@@ -66,25 +68,58 @@ function formatMembershipDate(timestamp) {
 
 function updateMembershipApps() {
   const membership = readMembership();
+  const account = getSignedInAccount();
+  const purchased = Boolean(account?.unlockedApps?.includes(demonsAppId));
+  const canOpen = purchased && membership.active;
 
   membershipApps.forEach((card) => {
     const status = card.querySelector("[data-membership-status]");
     const copy = card.querySelector("[data-membership-copy]");
     const launch = card.querySelector("[data-membership-launch]");
 
-    card.classList.toggle("membership-locked", !membership.active);
-    card.classList.toggle("is-membership-active", membership.active);
-    status.textContent = membership.active ? "Member" : "Locked";
-    launch.href = membership.active ? launch.dataset.appHref : "rewards.html";
-    launch.textContent = membership.active ? "Open" : "Get Pass";
+    card.classList.toggle("membership-locked", !canOpen);
+    card.classList.toggle("is-membership-active", canOpen);
+    launch.href = canOpen ? launch.dataset.appHref : "rewards.html";
 
-    if (membership.active && membership.expiresAt) {
+    if (canOpen && membership.expiresAt) {
+      status.textContent = "Member";
+      launch.textContent = "Open";
       copy.textContent = `Membership active until ${formatMembershipDate(membership.expiresAt)}.`;
-    } else if (membership.active) {
+    } else if (canOpen) {
+      status.textContent = "Member";
+      launch.textContent = "Open";
       copy.textContent = "Membership active. The game is unlocked.";
+    } else if (purchased) {
+      status.textContent = "Pass Needed";
+      launch.textContent = "Get Pass";
+      copy.textContent = "Purchased for 2 billion ADC. Renew the Membership Pass to play.";
     } else {
-      copy.textContent = "A human social-deduction game available with an active Membership Pass.";
+      status.textContent = "2B ADC";
+      launch.textContent = "Buy for 2B ADC";
+      copy.textContent = "Costs 2 billion ADC and requires an active Membership Pass.";
     }
+  });
+}
+
+function updatePaidApps() {
+  const account = getSignedInAccount();
+
+  paidApps.forEach((card) => {
+    const appId = card.dataset.paidApp;
+    const cost = Math.max(0, Number(card.dataset.paidCost) || 0);
+    const purchased = Boolean(account?.unlockedApps?.includes(appId));
+    const status = card.querySelector("[data-paid-status]");
+    const copy = card.querySelector("[data-paid-copy]");
+    const launch = card.querySelector("[data-paid-launch]");
+
+    card.classList.toggle("membership-locked", !purchased);
+    card.classList.toggle("is-membership-active", purchased);
+    launch.href = purchased ? launch.dataset.appHref : "rewards.html";
+    launch.textContent = purchased ? "Open" : `Buy for ${cost} ADC`;
+    status.textContent = purchased ? "Owned" : `${cost} ADC`;
+    copy.textContent = purchased
+      ? "Purchased with Awesome Development Coins. Ready to play."
+      : `Build, explore, and play inside your biggest craft game. Unlock it for ${cost} ADC.`;
   });
 }
 
@@ -431,6 +466,7 @@ function redeemAppCodeFromLocation() {
   const appName = payload.appId === "all-apps" ? "All apps" : availableApps.get(payload.appId).name;
   clearAppCodeFromUrl();
   updateMembershipApps();
+  updatePaidApps();
   renderAccountFolder();
   setRedeemNotice(`${appName} unlocked and added to your folder.`);
   return true;
@@ -607,15 +643,22 @@ document.addEventListener("click", (event) => {
 
 window.addEventListener("pageshow", () => {
   updateMembershipApps();
+  updatePaidApps();
   renderAccountFolder();
 });
 window.addEventListener("storage", () => {
   updateMembershipApps();
+  updatePaidApps();
   renderAccountFolder();
+});
+window.addEventListener("awesome-account-change", () => {
+  updateMembershipApps();
+  updatePaidApps();
 });
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
     updateMembershipApps();
+    updatePaidApps();
     renderAccountFolder();
   }
 });
@@ -623,6 +666,7 @@ document.addEventListener("visibilitychange", () => {
 setupFolderActions();
 setupSourceCodeLinks();
 updateMembershipApps();
+updatePaidApps();
 renderAccountFolder();
 updateCards();
 redeemAppCodeFromLocation();

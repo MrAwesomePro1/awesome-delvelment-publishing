@@ -9,13 +9,20 @@
     { id: "five", label: "5 ADC", seconds: 5 * 60, amount: 5, code: "AWESOME-ADC-5" },
     { id: "nineteen", label: "19 ADC", seconds: 10 * 60, amount: 19, code: "AWESOME-ADC-19" },
     { id: "pass", label: "100 ADC + 12-week Membership", seconds: 60 * 60, amount: 100, code: "AWESOME-ADC-12WEEK-MEMBER-100" },
-    { id: "billion", label: "1 billion ADC", seconds: 100 * yearSeconds, amount: 1000000000, code: "AWESOME-ADC-BILLION" }
+    { id: "one-million", label: "1 million ADC", seconds: yearSeconds / 10, amount: 1000000, code: "AWESOME-ADC-1-MILLION" },
+    { id: "hundred-million", label: "100 million ADC", seconds: 10 * yearSeconds, amount: 100000000, code: "AWESOME-ADC-100-MILLION" },
+    { id: "billion", label: "1 billion ADC", seconds: 100 * yearSeconds, amount: 1000000000, code: "AWESOME-ADC-BILLION" },
+    { id: "hundred-billion", label: "100 billion ADC", seconds: 10000 * yearSeconds, amount: 100000000000, code: "AWESOME-ADC-100-BILLION" },
+    { id: "one-trillion", label: "1 trillion ADC", seconds: 100000 * yearSeconds, amount: 1000000000000, code: "AWESOME-ADC-1-TRILLION" },
+    { id: "hundred-trillion", label: "100 trillion ADC", seconds: 10000000 * yearSeconds, amount: 100000000000000, code: "AWESOME-ADC-100-TRILLION" },
+    { id: "infinite", label: "infinite ADC", seconds: Number.POSITIVE_INFINITY, amount: Number.POSITIVE_INFINITY, code: "AWESOME-ADC-INFINITE" }
   ];
   const appLinkProducts = {
     "snake-progect": { name: "Snake Progect", cost: 5 },
+    awesomecraft: { name: "AwesomeCraft", cost: 7 },
     viders: { name: "Viders", cost: 19 },
-    "the-demons": { name: "THE DEMONS Pass", cost: 100 },
-    "all-apps": { name: "All Apps", cost: 1000000000 }
+    "the-demons": { name: "THE DEMONS Pass", cost: 2000000000 },
+    "all-apps": { name: "All Apps", cost: 2000000000 }
   };
   const appLinkLengthMs = 30 * 24 * 60 * 60 * 1000;
   const finalMilestoneSeconds = milestones[milestones.length - 1].seconds;
@@ -27,12 +34,17 @@
   function readState() {
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey));
+      const hasInfiniteWalletFlag = typeof saved?.infiniteWalletActive === "boolean";
       const loadedState = {
         totalSeconds: Math.max(0, Number(saved?.totalSeconds) || 0),
         claimed: saved?.claimed && typeof saved.claimed === "object" ? saved.claimed : {},
         passExpiresAt: Math.max(0, Number(saved?.passExpiresAt) || 0),
         unlimitedClaims: Boolean(saved?.unlimitedClaims),
         bonusWalletCredit: Math.max(0, Number(saved?.bonusWalletCredit) || 0),
+        walletResetCredit: Math.max(0, Number(saved?.walletResetCredit) || 0),
+        infiniteWalletActive: hasInfiniteWalletFlag
+          ? saved.infiniteWalletActive
+          : Boolean(saved?.claimed?.infinite),
         walletSpent: Math.max(0, Number(saved?.walletSpent) || 0),
         lastAppLink: typeof saved?.lastAppLink === "string" ? saved.lastAppLink : "",
         lastAppName: typeof saved?.lastAppName === "string" ? saved.lastAppName : "",
@@ -55,6 +67,9 @@
         milestones.forEach((reward) => {
           loadedState.claimed[reward.id] = `${reward.code}-2017`;
         });
+        if (!hasInfiniteWalletFlag) {
+          loadedState.infiniteWalletActive = true;
+        }
       }
 
       return loadedState;
@@ -65,6 +80,8 @@
         passExpiresAt: 0,
         unlimitedClaims: false,
         bonusWalletCredit: 0,
+        walletResetCredit: 0,
+        infiniteWalletActive: false,
         walletSpent: 0,
         lastAppLink: "",
         lastAppName: "",
@@ -99,6 +116,10 @@
   }
 
   function formatWait(totalSeconds) {
+    if (!Number.isFinite(totalSeconds)) {
+      return "infinite years";
+    }
+
     if (totalSeconds >= yearSeconds) {
       const years = Math.ceil(totalSeconds / yearSeconds);
       return `${years} ${years === 1 ? "year" : "years"}`;
@@ -127,15 +148,34 @@
   }
 
   function formatCoins(amount) {
+    if (!Number.isFinite(amount)) {
+      return "\u221e ADC";
+    }
+
     return `${Math.max(0, amount).toLocaleString(undefined, { maximumFractionDigits: 0 })} ADC`;
   }
 
-  function walletEarned() {
+  function historyAmount(amount) {
+    return Number.isFinite(amount) ? amount : "infinite";
+  }
+
+  function finiteWalletGross() {
     const claimedTotal = milestones.reduce((total, reward) => {
-      return state.claimed[reward.id] ? total + reward.amount : total;
+      if (!state.claimed[reward.id] || !Number.isFinite(reward.amount)) {
+        return total;
+      }
+      return total + reward.amount;
     }, 0);
 
     return claimedTotal + state.bonusWalletCredit;
+  }
+
+  function walletEarned() {
+    if (state.infiniteWalletActive) {
+      return Number.POSITIVE_INFINITY;
+    }
+
+    return Math.max(0, finiteWalletGross() - state.walletResetCredit);
   }
 
   function walletBalance() {
@@ -143,12 +183,17 @@
   }
 
   function walletCode() {
-    if (!walletEarned()) {
+    const earned = walletEarned();
+    if (!earned) {
       return "Claim rewards to unlock";
     }
 
+    if (!Number.isFinite(earned)) {
+      return "AWESOME-ADC-INFINITE";
+    }
+
     const claimedCount = milestones.filter((reward) => state.claimed[reward.id]).length;
-    return `AWESOME-ADC-${claimedCount}-${String(walletEarned()).padStart(3, "0")}`;
+    return `AWESOME-ADC-${claimedCount}-${String(earned).padStart(3, "0")}`;
   }
 
   function createAppCodeId() {
@@ -181,13 +226,27 @@
       state.claimed[reward.id] = `${reward.code}-2017`;
     });
     state.passExpiresAt = Date.now() + passLengthMs;
+    state.walletResetCredit = 0;
+    state.infiniteWalletActive = true;
     state.walletSpent = 0;
     state.walletHistory.unshift({
-      amount: walletEarned(),
+      amount: historyAmount(walletEarned()),
       date: Date.now(),
       label: "Unlock code used - repeat claims on"
     });
     state.walletHistory = state.walletHistory.slice(0, 8);
+    saveState();
+  }
+
+  function resetWallet() {
+    state.walletResetCredit = finiteWalletGross();
+    state.infiniteWalletActive = false;
+    state.walletSpent = 0;
+    state.walletHistory = [{
+      amount: 0,
+      date: Date.now(),
+      label: "Wallet reset to 0 ADC"
+    }];
     saveState();
   }
 
@@ -227,6 +286,7 @@
     const walletSpentLabel = document.querySelector("[data-wallet-spent]");
     const walletCodeLabel = document.querySelector("[data-wallet-code]");
     const walletHistory = document.querySelector("[data-wallet-history]");
+    const resetWalletButton = document.querySelector("[data-reset-wallet]");
     const appLinkResult = document.querySelector("[data-app-link-result]");
     const appLinkOutput = document.querySelector("[data-app-link-output]");
     const next = nextReward();
@@ -296,6 +356,7 @@
     walletEarnedLabel.textContent = `Earned: ${formatCoins(earned)}`;
     walletSpentLabel.textContent = `Used online: ${formatCoins(spent)}`;
     walletCodeLabel.textContent = signedIn ? walletCode() : "Log in to view";
+    resetWalletButton.disabled = !signedIn || balance === 0;
 
     document.querySelectorAll("[data-spend-online]").forEach((button) => {
       const amount = appLinkProducts[button.dataset.createAppLink]?.cost || Number(button.dataset.spendOnline);
@@ -372,12 +433,16 @@
         }
 
         if (claimed && state.unlimitedClaims) {
-          state.bonusWalletCredit += reward.amount;
+          if (Number.isFinite(reward.amount)) {
+            state.bonusWalletCredit += reward.amount;
+          } else {
+            state.infiniteWalletActive = true;
+          }
           if (reward.id === "pass") {
             state.passExpiresAt = Math.max(Date.now(), state.passExpiresAt || 0) + passLengthMs;
           }
           state.walletHistory.unshift({
-            amount: reward.amount,
+            amount: historyAmount(reward.amount),
             date: Date.now(),
             label: `${formatCoins(reward.amount)} claimed again`
           });
@@ -388,6 +453,9 @@
         }
 
         state.claimed[reward.id] = rewardCode(reward);
+        if (!Number.isFinite(reward.amount)) {
+          state.infiniteWalletActive = true;
+        }
         if (reward.id === "pass") {
           state.passExpiresAt = Date.now() + passLengthMs;
         }
@@ -416,6 +484,27 @@
       } catch (error) {
         status.textContent = code;
       }
+    });
+
+    document.querySelector("[data-reset-wallet]").addEventListener("click", () => {
+      const status = document.querySelector("[data-wallet-copy-status]");
+      if (!isAccountSignedIn()) {
+        status.textContent = "Log in first";
+        return;
+      }
+
+      if (walletBalance() === 0) {
+        status.textContent = "Wallet is already at 0 ADC";
+        return;
+      }
+
+      if (!window.confirm("Reset your Awesome Development Coin balance to 0 ADC?")) {
+        return;
+      }
+
+      resetWallet();
+      status.textContent = "Wallet reset to 0 ADC";
+      render();
     });
 
     document.querySelector("[data-copy-app-link]").addEventListener("click", async () => {

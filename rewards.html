@@ -28,7 +28,7 @@
         <div class="reward-intro">
           <p class="eyebrow">Awesome Delvelment rewards</p>
           <h1 id="reward-title">Use the launcher. Unlock rewards.</h1>
-          <p class="subhead">Earn Awesome Development Coins (ADC) at 5 minutes, 10 minutes, 1 hour, and 100 years.</p>
+          <p class="subhead">Earn Awesome Development Coins (ADC) from 5 minutes all the way up to infinity.</p>
         </div>
 
         <section class="reward-tracker" aria-label="Reward progress">
@@ -64,6 +64,7 @@
           </div>
           <div class="wallet-actions">
             <button class="secondary-action compact-action" type="button" data-copy-wallet-code>Copy code</button>
+            <button class="secondary-action compact-action" type="button" data-reset-wallet>Reset coins</button>
             <span data-wallet-copy-status></span>
           </div>
         </div>
@@ -73,9 +74,10 @@
           <h2>App code links</h2>
           <div class="wallet-spend-grid">
             <button class="primary-action wallet-spend-button" type="button" data-spend-online="5" data-create-app-link="snake-progect">Snake link - 5 ADC</button>
+            <button class="primary-action wallet-spend-button" type="button" data-spend-online="7" data-create-app-link="awesomecraft">AwesomeCraft link - 7 ADC</button>
             <button class="primary-action wallet-spend-button" type="button" data-spend-online="19" data-create-app-link="viders">Viders link - 19 ADC</button>
-            <button class="primary-action wallet-spend-button" type="button" data-spend-online="100" data-create-app-link="the-demons">Demons pass link - 100 ADC</button>
-            <button class="primary-action wallet-spend-button" type="button" data-spend-online="1000000000" data-create-app-link="all-apps">All apps link - 1 billion ADC</button>
+            <button class="primary-action wallet-spend-button" type="button" data-spend-online="2000000000" data-create-app-link="the-demons">Demons pass link - 2 billion ADC</button>
+            <button class="primary-action wallet-spend-button" type="button" data-spend-online="2000000000" data-create-app-link="all-apps">All apps link - 2 billion ADC</button>
           </div>
           <div class="app-link-result" data-app-link-result hidden>
             <span>App redeem link</span>
@@ -131,6 +133,28 @@
           <p class="reward-code" data-reward-code="pass" hidden></p>
         </article>
 
+        <article class="reward-tier one-million-tier" data-reward-card="one-million">
+          <div class="reward-tier-head">
+            <span class="reward-amount">1,000,000 ADC</span>
+            <span class="reward-state" data-reward-status="one-million">Locked</span>
+          </div>
+          <h2>1M Coin reward</h2>
+          <p>Use Awesome Delvelment for 37 days to earn one million Awesome Development Coins.</p>
+          <button class="primary-action reward-button" type="button" data-claim-reward="one-million">Claim</button>
+          <p class="reward-code" data-reward-code="one-million" hidden></p>
+        </article>
+
+        <article class="reward-tier million-tier" data-reward-card="hundred-million">
+          <div class="reward-tier-head">
+            <span class="reward-amount">100,000,000 ADC</span>
+            <span class="reward-state" data-reward-status="hundred-million">Locked</span>
+          </div>
+          <h2>100M Coin reward</h2>
+          <p>Use Awesome Delvelment for 10 years to earn 100 million Awesome Development Coins.</p>
+          <button class="primary-action reward-button" type="button" data-claim-reward="hundred-million">Claim</button>
+          <p class="reward-code" data-reward-code="hundred-million" hidden></p>
+        </article>
+
         <article class="reward-tier billion-tier" data-reward-card="billion">
           <div class="reward-tier-head">
             <span class="reward-amount">1,000,000,000 ADC</span>
@@ -140,6 +164,50 @@
           <p>Use Awesome Delvelment for 100 years to earn one billion Awesome Development Coins.</p>
           <button class="primary-action reward-button" type="button" data-claim-reward="billion">Claim</button>
           <p class="reward-code" data-reward-code="billion" hidden></p>
+        </article>
+
+        <article class="reward-tier mega-tier" data-reward-card="hundred-billion">
+          <div class="reward-tier-head">
+            <span class="reward-amount">100,000,000,000 ADC</span>
+            <span class="reward-state" data-reward-status="hundred-billion">Locked</span>
+          </div>
+          <h2>100B Coin reward</h2>
+          <p>Use Awesome Delvelment for 10,000 years to earn 100 billion Awesome Development Coins.</p>
+          <button class="primary-action reward-button" type="button" data-claim-reward="hundred-billion">Claim</button>
+          <p class="reward-code" data-reward-code="hundred-billion" hidden></p>
+        </article>
+
+        <article class="reward-tier trillion-tier" data-reward-card="one-trillion">
+          <div class="reward-tier-head">
+            <span class="reward-amount">1,000,000,000,000 ADC</span>
+            <span class="reward-state" data-reward-status="one-trillion">Locked</span>
+          </div>
+          <h2>1T Coin reward</h2>
+          <p>Use Awesome Delvelment for 100,000 years to earn one trillion Awesome Development Coins.</p>
+          <button class="primary-action reward-button" type="button" data-claim-reward="one-trillion">Claim</button>
+          <p class="reward-code" data-reward-code="one-trillion" hidden></p>
+        </article>
+
+        <article class="reward-tier hundred-trillion-tier" data-reward-card="hundred-trillion">
+          <div class="reward-tier-head">
+            <span class="reward-amount">100,000,000,000,000 ADC</span>
+            <span class="reward-state" data-reward-status="hundred-trillion">Locked</span>
+          </div>
+          <h2>100T Coin reward</h2>
+          <p>Use Awesome Delvelment for 10,000,000 years to earn 100 trillion Awesome Development Coins.</p>
+          <button class="primary-action reward-button" type="button" data-claim-reward="hundred-trillion">Claim</button>
+          <p class="reward-code" data-reward-code="hundred-trillion" hidden></p>
+        </article>
+
+        <article class="reward-tier infinite-tier" data-reward-card="infinite">
+          <div class="reward-tier-head">
+            <span class="reward-amount">&infin; ADC</span>
+            <span class="reward-state" data-reward-status="infinite">Locked</span>
+          </div>
+          <h2>Infinite Coin reward</h2>
+          <p>Use Awesome Delvelment for infinite years to earn infinite Awesome Development Coins.</p>
+          <button class="primary-action reward-button" type="button" data-claim-reward="infinite">Claim</button>
+          <p class="reward-code" data-reward-code="infinite" hidden></p>
         </article>
       </section>
 
