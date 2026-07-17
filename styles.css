@@ -1853,3 +1853,42 @@ h1 {
     box-shadow: var(--shadow);
   }
 }
+
+.youtube2-scene {
+  background:
+    radial-gradient(circle at 72% 22%, rgba(23, 237, 242, .32), transparent 22%),
+    linear-gradient(135deg, #08151d, #112c36 58%, #071014);
+}
+
+.youtube2-play {
+  position: relative;
+  display: grid;
+  width: 108px;
+  height: 68px;
+  place-items: center;
+  border: 3px solid #9dfcff;
+  border-radius: 14px;
+  background: #18e8ed;
+  box-shadow: 0 14px 26px rgba(0, 0, 0, .3), 0 0 24px rgba(23, 237, 242, .28);
+}
+
+.youtube2-play i {
+  width: 0;
+  height: 0;
+  margin-left: 7px;
+  border-top: 15px solid transparent;
+  border-bottom: 15px solid transparent;
+  border-left: 24px solid #07333b;
+}
+
+.youtube2-line {
+  position: absolute;
+  right: 16%;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .25);
+}
+
+.youtube2-line.one { bottom: 26px; width: 33%; }
+.youtube2-line.two { bottom: 45px; width: 23%; opacity: .75; }
+.youtube2-line.three { bottom: 64px; width: 14%; opacity: .5; }
