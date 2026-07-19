@@ -1,4 +1,4 @@
-const CACHE_NAME = "viders-shell-v20260509f";
+const CACHE_NAME = "viders-shell-v20260719a";
 const APP_SHELL = [
   "./",
   "./?source=pwa",
@@ -6,13 +6,13 @@ const APP_SHELL = [
   "./parents.html",
   "./merch.html",
   "./trailer.html",
-  "./styles.css?v=20260509d",
-  "./merch.css?v=20260509f",
-  "./app.js?v=20260509d",
-  "./merch.js?v=20260509f",
-  "./viders-bot.js?v=20260509d",
-  "./parents.js?v=20260509d",
-  "./trailer.js?v=20260509d",
+  "./styles.css?v=20260719a",
+  "./merch.css?v=20260711a",
+  "./app.js?v=20260719a",
+  "./merch.js?v=20260711a",
+  "./viders-bot.js?v=20260719a",
+  "./parents.js?v=20260711a",
+  "./trailer.js?v=20260711a",
   "./viders-logo-angled.svg",
   "./viders-merch-hero.png",
   "./viders-icon-angled-192.png",
@@ -21,7 +21,7 @@ const APP_SHELL = [
   "./viders-apple-touch-angled-152.png",
   "./viders-apple-touch-angled-167.png",
   "./viders-apple-touch-angled-180.png",
-  "./manifest.webmanifest?v=20260509f"
+  "./manifest.webmanifest?v=20260719a"
 ];
 
 self.addEventListener("install", (event) => {

@@ -3,6 +3,7 @@ const mediaDbName = "viders-media";
 const mediaStoreName = "video-files";
 const appRemovalRequestKey = "viders.removeRequestedAt";
 const appRecoveryLoginKey = "viders.recoveryLoginRequestedAt";
+const retiredQaAccountKeys = new Set(["switch-one@viders.local", "switch-two@viders.local"]);
 
 const seededVideos = [
   {
@@ -187,6 +188,8 @@ const defaultState = {
   activeChannel: "All",
   user: null,
   plan: "Viewer",
+  accounts: [],
+  plansByUser: {},
   seasonTheme: "auto",
   subscriptionsByUser: {},
   historyByUser: {},
@@ -287,9 +290,13 @@ const adSession = {
   timer: null
 };
 
+const publisherEmbedMode =
+  typeof window !== "undefined" && window.VIDERS_PUBLISHER_EMBED === true;
+
 const deployConfig = {
-  siteId: "awesomeviders",
-  deleteToken: "dlt_4048b754013c183385afa2b709866e7773e50e1621ddddf1",
+  siteId: publisherEmbedMode ? "" : "awesomeviders",
+  publicBaseUrl: publisherEmbedMode ? "" : "https://pagedrop.dev/s/awesomeviders",
+  deleteToken: publisherEmbedMode ? "" : "dlt_4048b754013c183385afa2b709866e7773e50e1621ddddf1",
   manifestPath: "videos-manifest.json",
   uploadDir: "uploads",
   maxZipBytes: 10 * 1024 * 1024
@@ -348,6 +355,12 @@ const elements = {
   heroStudioButton: document.querySelector("#heroStudioButton"),
   watchChannelButton: document.querySelector("#watchChannelButton"),
   authModal: document.querySelector("#authModal"),
+  authModalTitle: document.querySelector("#authModalTitle"),
+  authModalCopy: document.querySelector("#authModalCopy"),
+  accountSwitcher: document.querySelector("#accountSwitcher"),
+  accountList: document.querySelector("#accountList"),
+  guestModeButton: document.querySelector("#guestModeButton"),
+  authSubmitButton: document.querySelector("#authSubmitButton"),
   closeAuthModal: document.querySelector("#closeAuthModal"),
   installModal: document.querySelector("#installModal"),
   closeInstallModal: document.querySelector("#closeInstallModal"),
@@ -398,6 +411,12 @@ const elements = {
   parentBedtimeToggle: document.querySelector("#parentBedtimeToggle"),
   resetChildUsageButton: document.querySelector("#resetChildUsageButton"),
   parentActivityList: document.querySelector("#parentActivityList"),
+  channelForm: document.querySelector("#channelForm"),
+  channelNameInput: document.querySelector("#channelNameInput"),
+  channelBioInput: document.querySelector("#channelBioInput"),
+  channelAccentInput: document.querySelector("#channelAccentInput"),
+  channelPreview: document.querySelector("#channelPreview"),
+  channelSettingsMessage: document.querySelector("#channelSettingsMessage"),
   uploadForm: document.querySelector("#uploadForm"),
   videoFileInput: document.querySelector("#videoFileInput"),
   publishButton: document.querySelector("#publishButton"),
@@ -423,7 +442,10 @@ const mediaRuntime = {
 };
 const sharedRuntime = {
   manifestPromise: null,
-  deploying: false
+  deploying: false,
+  liveSyncTimer: null,
+  liveSyncStarted: false,
+  pendingPlan: null
 };
 const pwaRuntime = {
   installPromptEvent: null,
@@ -519,12 +541,78 @@ function normalizeParentControls(savedControls = {}) {
   };
 }
 
+function normalizeChannelName(value, fallback = "Viders Viewer") {
+  const name = String(value || "").trim().replace(/\s+/g, " ").slice(0, 40);
+  return name || fallback;
+}
+
+function normalizeChannelBio(value) {
+  return String(value || "").trim().replace(/\s+/g, " ").slice(0, 140);
+}
+
+function normalizeChannelAccent(value) {
+  const accent = String(value || "").trim().toLowerCase();
+  return /^#[0-9a-f]{6}$/.test(accent) ? accent : "#ff8c42";
+}
+
+function normalizeSavedAccount(account) {
+  if (!account || typeof account !== "object") {
+    return null;
+  }
+
+  const email = String(account.email || "").trim().toLowerCase().slice(0, 100);
+  const fallbackName = email ? email.split("@")[0] : "";
+  const name = String(account.name || fallbackName).trim().slice(0, 40);
+
+  if (!name && !email) {
+    return null;
+  }
+
+  return {
+    name: name || "Viders Viewer",
+    email,
+    channelName: normalizeChannelName(account.channelName, name || "Viders Viewer"),
+    channelBio: normalizeChannelBio(account.channelBio),
+    channelAccent: normalizeChannelAccent(account.channelAccent)
+  };
+}
+
+function mergeSavedAccounts(...collections) {
+  const accountsByKey = new Map();
+
+  collections.forEach((collection) => {
+    const accounts = Array.isArray(collection) ? collection : [];
+    accounts.forEach((account) => {
+      const normalizedAccount = normalizeSavedAccount(account);
+      const accountKey = getUserKey(normalizedAccount);
+      if (!normalizedAccount || !accountKey) {
+        return;
+      }
+
+      accountsByKey.set(accountKey, normalizedAccount);
+    });
+  });
+
+  return [...accountsByKey.values()].slice(-8);
+}
+
 function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
+    const savedUser = normalizeSavedAccount(saved?.user);
+    const normalizedUser = savedUser && !retiredQaAccountKeys.has(getUserKey(savedUser)) ? savedUser : null;
+    const accounts = mergeSavedAccounts(saved?.accounts, normalizedUser ? [normalizedUser] : []).filter(
+      (account) => !retiredQaAccountKeys.has(getUserKey(account))
+    );
+    const plansByUser =
+      saved?.plansByUser && typeof saved.plansByUser === "object" ? { ...saved.plansByUser } : {};
+    retiredQaAccountKeys.forEach((accountKey) => delete plansByUser[accountKey]);
     const nextState = {
       ...defaultState,
       ...saved,
+      user: normalizedUser,
+      accounts,
+      plansByUser,
       subscriptionsByUser:
         saved?.subscriptionsByUser && typeof saved.subscriptionsByUser === "object" ? saved.subscriptionsByUser : {},
       historyByUser: saved?.historyByUser && typeof saved.historyByUser === "object" ? saved.historyByUser : {},
@@ -542,7 +630,16 @@ function loadState() {
       parentActivity: Array.isArray(saved?.parentActivity) ? saved.parentActivity.slice(0, 16) : []
     };
 
-    if (!nextState.user) {
+    if (nextState.user) {
+      const userKey = getUserKey(nextState.user);
+      const accountPlan = plansByUser[userKey];
+      nextState.plan = planCatalog[accountPlan]
+        ? accountPlan
+        : planCatalog[nextState.plan]
+          ? nextState.plan
+          : "Viewer";
+      nextState.plansByUser[userKey] = nextState.plan;
+    } else {
       nextState.plan = "Viewer";
     }
 
@@ -562,7 +659,25 @@ function loadState() {
   }
 }
 
+function rememberCurrentAccount() {
+  if (!state?.user) {
+    return;
+  }
+
+  const normalizedUser = normalizeSavedAccount(state.user);
+  const userKey = getUserKey(normalizedUser);
+  if (!normalizedUser || !userKey) {
+    return;
+  }
+
+  state.user = normalizedUser;
+  state.accounts = mergeSavedAccounts(state.accounts, [normalizedUser]);
+  state.plansByUser = state.plansByUser && typeof state.plansByUser === "object" ? state.plansByUser : {};
+  state.plansByUser[userKey] = planCatalog[state.plan] ? state.plan : "Viewer";
+}
+
 function saveState() {
+  rememberCurrentAccount();
   localStorage.setItem(storageKey, JSON.stringify(state));
 }
 
@@ -656,6 +771,18 @@ function hasLiveDeployAccess() {
   );
 }
 
+function canReadLiveManifest() {
+  return Boolean(deployConfig.publicBaseUrl || hasLiveDeployAccess());
+}
+
+function getPublicSitePath(path) {
+  if (!deployConfig.publicBaseUrl) {
+    return path;
+  }
+
+  return `${deployConfig.publicBaseUrl.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
+}
+
 function getCacheBustedPath(path) {
   const separator = path.includes("?") ? "&" : "?";
   return `${path}${separator}t=${Date.now()}`;
@@ -675,6 +802,18 @@ async function fetchSiteBlob(path) {
     throw new Error(`Could not load ${path}.`);
   }
   return response.blob();
+}
+
+async function fetchHostedAssetBlob(path) {
+  try {
+    return await fetchSiteBlob(path);
+  } catch (error) {
+    if (!deployConfig.publicBaseUrl) {
+      throw error;
+    }
+
+    return fetchSiteBlob(getPublicSitePath(path));
+  }
 }
 
 function sanitizeFilePart(value) {
@@ -730,12 +869,12 @@ function mergeHostedUploads(...collections) {
 }
 
 async function fetchLiveHostedUploads({ useStateFallback = true } = {}) {
-  if (!hasLiveDeployAccess()) {
+  if (!canReadLiveManifest()) {
     return normalizeHostedUploads(state.uploads);
   }
 
   try {
-    const response = await fetch(getCacheBustedPath(deployConfig.manifestPath), { cache: "no-store" });
+    const response = await fetch(getCacheBustedPath(getPublicSitePath(deployConfig.manifestPath)), { cache: "no-store" });
     if (!response.ok) {
       throw new Error("Could not refresh the live Viders uploads.");
     }
@@ -751,17 +890,22 @@ async function fetchLiveHostedUploads({ useStateFallback = true } = {}) {
   }
 }
 
-async function loadHostedManifest() {
-  if (!hasLiveDeployAccess()) {
+async function loadHostedManifest(options = {}) {
+  if (!canReadLiveManifest()) {
     return;
   }
 
   if (!sharedRuntime.manifestPromise) {
     const manifestPromise = (async () => {
       const liveUploads = await fetchLiveHostedUploads();
-      state.uploads = liveUploads;
+      const existingIds = new Set(state.uploads.map((video) => getUploadIdentity(video)));
+      const newUploadCount = liveUploads.filter((video) => !existingIds.has(getUploadIdentity(video))).length;
+      state.uploads = mergeHostedUploads(liveUploads, state.uploads);
       saveState();
       render();
+      if (options.showToastOnNew && newUploadCount > 0) {
+        showToast(`${newUploadCount} new Viders upload${newUploadCount === 1 ? "" : "s"} synced.`);
+      }
       return liveUploads;
     })();
 
@@ -774,6 +918,31 @@ async function loadHostedManifest() {
   }
 
   return sharedRuntime.manifestPromise;
+}
+
+function startLiveUploadSync() {
+  if (sharedRuntime.liveSyncStarted || !canReadLiveManifest()) {
+    return;
+  }
+
+  sharedRuntime.liveSyncStarted = true;
+  sharedRuntime.liveSyncTimer = window.setInterval(() => {
+    if (!document.hidden && !sharedRuntime.deploying) {
+      loadHostedManifest({ showToastOnNew: true });
+    }
+  }, 45000);
+
+  window.addEventListener("focus", () => {
+    if (!sharedRuntime.deploying) {
+      loadHostedManifest({ showToastOnNew: true });
+    }
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && !sharedRuntime.deploying) {
+      loadHostedManifest({ showToastOnNew: true });
+    }
+  });
 }
 
 async function buildHostedSiteZip(videos, newHostedAsset = null) {
@@ -879,7 +1048,7 @@ async function buildHostedSiteZip(videos, newHostedAsset = null) {
       continue;
     }
 
-    const blob = await fetchSiteBlob(video.assetPath);
+    const blob = await fetchHostedAssetBlob(video.assetPath);
     zip.file(video.assetPath, blob);
   }
 
@@ -1288,6 +1457,10 @@ function isVideoOwnedByUser(video, user = state.user) {
     return false;
   }
 
+  if (video.ownerKey) {
+    return video.ownerKey === getUserKey(user);
+  }
+
   return (video.owner || video.channel) === user.name;
 }
 
@@ -1304,13 +1477,92 @@ function getUserAds() {
     return [];
   }
 
-  return state.ads.filter((ad) => ad.owner === state.user.name);
+  const userKey = getUserKey();
+  return state.ads.filter((ad) => (ad.ownerKey ? ad.ownerKey === userKey : ad.owner === state.user.name));
 }
 
 function getUserKey(user = state.user) {
   const emailKey = user?.email?.toString().trim().toLowerCase();
   const nameKey = user?.name?.toString().trim().toLowerCase();
   return emailKey || nameKey || "";
+}
+
+function getAccountChannelName(account = state.user) {
+  const normalizedAccount = normalizeSavedAccount(account);
+  return normalizedAccount?.channelName || normalizedAccount?.name || "Viders";
+}
+
+function getCurrentChannelName() {
+  return getAccountChannelName(state.user);
+}
+
+function getSavedAccountsWithCurrent() {
+  return mergeSavedAccounts(state.accounts, state.user ? [state.user] : []);
+}
+
+function findAccountByKey(userKey) {
+  if (!userKey) {
+    return null;
+  }
+
+  return getSavedAccountsWithCurrent().find((account) => getUserKey(account) === userKey) || null;
+}
+
+function findAccountByOwnerName(ownerName) {
+  const normalizedOwner = String(ownerName || "").trim().toLowerCase();
+  if (!normalizedOwner) {
+    return null;
+  }
+
+  return (
+    getSavedAccountsWithCurrent().find((account) => {
+      return (
+        account.name.toLowerCase() === normalizedOwner ||
+        getAccountChannelName(account).toLowerCase() === normalizedOwner
+      );
+    }) || null
+  );
+}
+
+function getAccountForVideo(video) {
+  if (!video || video.channel === "Viders") {
+    return null;
+  }
+
+  return findAccountByKey(video.ownerKey) || findAccountByOwnerName(video.owner || video.channel);
+}
+
+function getDisplayChannelName(video) {
+  const account = getAccountForVideo(video);
+  return account ? getAccountChannelName(account) : video?.channel || "Viders";
+}
+
+function getChannelProfile(channelName, sourceVideo = null) {
+  const account =
+    getAccountForVideo(sourceVideo) ||
+    getSavedAccountsWithCurrent().find((savedAccount) => getAccountChannelName(savedAccount) === channelName);
+
+  if (account) {
+    return {
+      name: getAccountChannelName(account),
+      bio: account.channelBio || "",
+      accent: normalizeChannelAccent(account.channelAccent)
+    };
+  }
+
+  if (channelName === "Viders") {
+    return {
+      name: "Viders",
+      bio: "The main Viders channel for featured videos and shared uploads.",
+      accent: "#ff8c42"
+    };
+  }
+
+  return {
+    name: channelName || "Viders",
+    bio: "",
+    accent: "#ff8c42"
+  };
 }
 
 function getUserSubscriptions(user = state.user) {
@@ -1590,13 +1842,29 @@ function renderChildGuardOverlay(reason = getChildSessionBlockReason()) {
 }
 
 function getAllVideos() {
-  return [...seededVideos, ...state.uploads].map((video) => {
+  const starterCommentAuthors = new Set(["Viders Team", "First Viewer"]);
+  return [
+    ...seededVideos.map((video) => ({ video, isSeeded: true })),
+    ...state.uploads.map((video) => ({ video, isSeeded: false }))
+  ].map(({ video, isSeeded }) => {
     const bonusViews = Number(state.viewBoosts[video.id] || 0);
+    const channelName = getDisplayChannelName(video);
+    const channelProfile = getChannelProfile(channelName, video);
+    const savedComments = Array.isArray(video.comments) ? video.comments : [];
+    const comments = isSeeded
+      ? savedComments
+      : savedComments.filter((comment) => !starterCommentAuthors.has(comment?.author));
+    const savedSubscribers = Number(video.subscribers || 0);
     return {
       ...video,
+      originalChannel: video.channel,
+      channel: channelName,
+      channelBio: channelProfile.bio,
+      channelAccent: channelProfile.accent,
       resolvedSrc: resolveVideoSrc(video),
+      subscribers: !isSeeded && savedSubscribers === 1200 ? 0 : savedSubscribers,
       views: Number(video.views || 0) + bonusViews,
-      comments: Array.isArray(video.comments) ? video.comments : []
+      comments
     };
   });
 }
@@ -1612,11 +1880,14 @@ function getChannelStats() {
 
   getBrowsableVideos().forEach((video) => {
     if (!stats.has(video.channel)) {
+      const channelProfile = getChannelProfile(video.channel, video);
       stats.set(video.channel, {
         name: video.channel,
         views: 0,
         videos: 0,
-        subscribers: Number(video.subscribers || 0)
+        subscribers: Number(video.subscribers || 0),
+        bio: channelProfile.bio,
+        accent: channelProfile.accent
       });
     }
 
@@ -1630,6 +1901,21 @@ function getChannelStats() {
     channel.subscribers += subscriptionBoosts.get(channel.name) || 0;
   });
 
+  if (state.user) {
+    const channelName = getCurrentChannelName();
+    if (channelName && !stats.has(channelName)) {
+      const channelProfile = getChannelProfile(channelName);
+      stats.set(channelName, {
+        name: channelName,
+        views: 0,
+        videos: 0,
+        subscribers: 0,
+        bio: channelProfile.bio,
+        accent: channelProfile.accent
+      });
+    }
+  }
+
   return [...stats.values()].sort((left, right) => right.views - left.views);
 }
 
@@ -1642,7 +1928,7 @@ function getUserChannel() {
     return null;
   }
 
-  return getChannelStats().find((channel) => channel.name === state.user.name) || null;
+  return getChannelStats().find((channel) => channel.name === getCurrentChannelName()) || null;
 }
 
 function getUserOwnedViews() {
@@ -1661,12 +1947,173 @@ function showToast(message) {
   }, 2600);
 }
 
+function renderAccountSwitcher() {
+  const accounts = mergeSavedAccounts(state.accounts, state.user ? [state.user] : []);
+  const currentUserKey = getUserKey();
+  const hasSavedAccounts = accounts.length > 0;
+  const pendingPlan = planCatalog[sharedRuntime.pendingPlan] ? sharedRuntime.pendingPlan : null;
+
+  state.accounts = accounts;
+  elements.accountSwitcher?.classList.toggle("hidden", !hasSavedAccounts);
+
+  if (elements.authModalTitle) {
+    elements.authModalTitle.textContent = pendingPlan
+      ? `Activate ${pendingPlan}`
+      : hasSavedAccounts
+        ? "Switch accounts"
+        : "Join Viders";
+  }
+
+  if (elements.authModalCopy) {
+    elements.authModalCopy.textContent = pendingPlan
+      ? `Choose a saved account or add one to activate ${pendingPlan}.`
+      : hasSavedAccounts
+        ? "Choose a saved account or add another one. Each account keeps its own plan, subscriptions, and history."
+        : "Viewers can keep watching as guests. Sign in to unlock Viders, Creator, Pro, Premium, or Ultimate features.";
+  }
+
+  if (elements.authSubmitButton) {
+    elements.authSubmitButton.textContent = pendingPlan
+      ? hasSavedAccounts
+        ? `Add account + ${pendingPlan}`
+        : `Sign in + ${pendingPlan}`
+      : hasSavedAccounts
+        ? "Add account"
+        : "Continue";
+  }
+
+  if (!elements.accountList) {
+    return;
+  }
+
+  const sortedAccounts = [...accounts].sort((left, right) => {
+    const leftIsCurrent = getUserKey(left) === currentUserKey ? 1 : 0;
+    const rightIsCurrent = getUserKey(right) === currentUserKey ? 1 : 0;
+    return rightIsCurrent - leftIsCurrent;
+  });
+
+  elements.accountList.innerHTML = sortedAccounts
+    .map((account) => {
+      const accountKey = getUserKey(account);
+      const isCurrent = Boolean(currentUserKey && accountKey === currentUserKey);
+      const accountPlan = planCatalog[state.plansByUser?.[accountKey]] ? state.plansByUser[accountKey] : "Viewer";
+      const initial = (account.name || account.email || "V").charAt(0).toUpperCase();
+      return `
+        <div class="account-row${isCurrent ? " is-current" : ""}">
+          <button
+            class="account-select"
+            type="button"
+            data-switch-account="${escapeHtml(accountKey)}"
+            ${isCurrent ? "disabled" : ""}
+          >
+            <span class="account-row-main">
+              <span class="account-avatar" aria-hidden="true">${escapeHtml(initial)}</span>
+              <span class="account-row-copy">
+                <strong>${escapeHtml(account.name)}</strong>
+                <span class="account-row-email">${escapeHtml(account.email || "Saved on this device")}</span>
+              </span>
+            </span>
+            <span class="account-row-meta">
+              <span class="account-row-plan">${escapeHtml(accountPlan)}</span>
+              ${isCurrent ? '<span class="account-current-badge">Current</span>' : ""}
+            </span>
+          </button>
+          <button
+            class="account-forget-button"
+            type="button"
+            data-forget-account="${escapeHtml(accountKey)}"
+            aria-label="Forget ${escapeHtml(account.name)} on this device"
+          >
+            Forget
+          </button>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function switchToSavedAccount(accountKey) {
+  if (requiresParentUnlockForAccount() && !hasRecoveryLoginPass()) {
+    guardParentLockedAction("Parent controls are locking account changes.");
+    closeAuthModal();
+    return;
+  }
+
+  const account = state.accounts.find((savedAccount) => getUserKey(savedAccount) === accountKey);
+  if (!account) {
+    showToast("That saved account is no longer available.");
+    renderAccountSwitcher();
+    return;
+  }
+
+  rememberCurrentAccount();
+  const pendingPlan = planCatalog[sharedRuntime.pendingPlan] ? sharedRuntime.pendingPlan : null;
+  state.user = { ...account };
+  state.plan = pendingPlan || (planCatalog[state.plansByUser?.[accountKey]] ? state.plansByUser[accountKey] : "Viewer");
+  state.activeChannel = "All";
+  sharedRuntime.pendingPlan = null;
+  localStorage.removeItem(appRecoveryLoginKey);
+  saveState();
+  render();
+  closeAuthModal();
+  showToast(`Switched to ${state.user.name}.`);
+}
+
+function useGuestViewerMode() {
+  if (requiresParentUnlockForAccount() && !hasRecoveryLoginPass()) {
+    guardParentLockedAction("Parent controls are locking account changes.");
+    closeAuthModal();
+    return;
+  }
+
+  rememberCurrentAccount();
+  state.user = null;
+  state.plan = "Viewer";
+  state.activeChannel = "All";
+  saveState();
+  render();
+  closeAuthModal();
+  showToast("Guest viewer mode is ready. Your accounts are still saved.");
+}
+
+function forgetSavedAccount(accountKey) {
+  if (requiresParentUnlockForAccount() && !hasRecoveryLoginPass()) {
+    guardParentLockedAction("Parent controls are locking account changes.");
+    closeAuthModal();
+    return;
+  }
+
+  const account = state.accounts.find((savedAccount) => getUserKey(savedAccount) === accountKey);
+  if (!account) {
+    return;
+  }
+
+  const wasCurrentAccount = getUserKey() === accountKey;
+  state.accounts = state.accounts.filter((savedAccount) => getUserKey(savedAccount) !== accountKey);
+  if (state.plansByUser && typeof state.plansByUser === "object") {
+    delete state.plansByUser[accountKey];
+  }
+
+  if (wasCurrentAccount) {
+    state.user = null;
+    state.plan = "Viewer";
+    state.activeChannel = "All";
+  }
+
+  saveState();
+  render();
+  renderAccountSwitcher();
+  showToast(`${account.name} was forgotten on this device.`);
+}
+
 function openAuthModal() {
+  renderAccountSwitcher();
   elements.authModal.classList.remove("hidden");
 }
 
 function closeAuthModal() {
   elements.authModal.classList.add("hidden");
+  sharedRuntime.pendingPlan = null;
 }
 
 function openInstallModal() {
@@ -2031,7 +2478,7 @@ async function registerVidersServiceWorker() {
   }
 
   try {
-    const registration = await navigator.serviceWorker.register("service-worker.js?v=20260509d");
+    const registration = await navigator.serviceWorker.register("service-worker.js?v=20260719a");
     await registration.update().catch(() => null);
     await navigator.serviceWorker.ready;
     pwaRuntime.serviceWorkerReady = true;
@@ -2273,14 +2720,17 @@ function renderWatchPanel() {
     return;
   }
 
-  const channelStats = getChannelStat(video.channel) || {
-    name: video.channel,
+  const channelName = video.channel;
+  const channelStats = getChannelStat(channelName) || {
+    name: channelName,
     views: Number(video.views || 0),
     videos: 1,
-    subscribers: Number(video.subscribers || 0)
+    subscribers: Number(video.subscribers || 0),
+    bio: video.channelBio || "",
+    accent: normalizeChannelAccent(video.channelAccent)
   };
-  const ownChannel = Boolean(state.user && state.user.name === video.channel);
-  const subscribed = isSubscribed(video.channel);
+  const ownChannel = Boolean(state.user && getCurrentChannelName() === channelName);
+  const subscribed = isSubscribed(channelName);
   const subscribeButtonLabel = !state.user ? "Sign in to subscribe" : ownChannel ? "Your channel" : subscribed ? "Subscribed" : "Subscribe";
   const subscribeButtonClass = !state.user || subscribed ? "ghost-button" : "primary-button";
   const subscribeHelperText = !state.user
@@ -2290,9 +2740,11 @@ function renderWatchPanel() {
       : subscribed
         ? "Subscribed on this device. This creator will stay easy to jump back to."
         : "Subscribe to save this channel to your account on this device.";
-  const safeChannel = escapeHtml(video.channel);
-  const safeSubscribeChannel = escapeHtml(video.channel);
+  const safeChannel = escapeHtml(channelName);
+  const safeSubscribeChannel = escapeHtml(channelName);
   const safeSubscribeHelperText = escapeHtml(subscribeHelperText);
+  const safeChannelBio = channelStats.bio ? `<p class="channel-bio">${escapeHtml(channelStats.bio)}</p>` : "";
+  const safeChannelAccent = escapeHtml(normalizeChannelAccent(channelStats.accent));
 
   syncAdSession(video);
   elements.videoPlayer.src = video.resolvedSrc || video.src || sampleSource;
@@ -2303,13 +2755,14 @@ function renderWatchPanel() {
   elements.watchMeta.textContent = `${formatNumber(video.views)} views - ${video.uploadedAt}`;
   elements.watchLength.textContent = video.length;
   elements.watchDescription.textContent = video.description;
-  elements.watchChannelButton.textContent = `Open ${video.channel}`;
+  elements.watchChannelButton.textContent = `Open ${channelName}`;
   elements.channelHighlight.innerHTML = `
-    <div class="channel-highlight-top">
+    <div class="channel-highlight-top" style="--channel-accent:${safeChannelAccent}">
       <div>
         <p class="eyebrow">Channel spotlight</p>
         <h3>${safeChannel}</h3>
         <p>${formatNumber(channelStats.subscribers)} subscribers - ${formatNumber(channelStats.views)} channel views - ${channelStats.videos} videos</p>
+        ${safeChannelBio}
       </div>
       <button class="${subscribeButtonClass} small-button" type="button" data-subscribe-channel="${safeSubscribeChannel}" ${ownChannel ? "disabled" : ""}>
         ${subscribeButtonLabel}
@@ -2340,12 +2793,15 @@ function renderChannels() {
     .map(
       (channel) => {
         const safeChannelName = escapeHtml(channel.name);
+        const safeChannelBio = channel.bio ? `<p class="channel-entry-bio">${escapeHtml(channel.bio)}</p>` : "";
+        const safeChannelAccent = escapeHtml(normalizeChannelAccent(channel.accent));
         return `
-        <button class="channel-entry ${state.activeChannel === channel.name ? "active" : ""}" type="button" data-channel="${safeChannelName}">
+        <button class="channel-entry ${state.activeChannel === channel.name ? "active" : ""}" type="button" data-channel="${safeChannelName}" style="--channel-accent:${safeChannelAccent}">
           <div class="channel-entry-top">
             <strong>${safeChannelName}</strong>
             ${isSubscribed(channel.name) ? '<span class="subscription-pill">Subscribed</span>' : ""}
           </div>
+          ${safeChannelBio}
           <p>${formatNumber(channel.views)} channel views</p>
           <p>${formatNumber(channel.subscribers)} subscribers - ${channel.videos} videos</p>
         </button>
@@ -2553,6 +3009,49 @@ function renderCreatorVideos() {
     .join("");
 }
 
+function renderChannelSettings() {
+  if (!elements.channelForm) {
+    return;
+  }
+
+  const account = normalizeSavedAccount(state.user);
+  const hasAccount = Boolean(account);
+  const isEditing = hasAccount && elements.channelForm.contains(document.activeElement);
+  const channelName = account ? getAccountChannelName(account) : "Guest channel";
+  const channelBio = account?.channelBio || "";
+  const channelAccent = normalizeChannelAccent(account?.channelAccent);
+  const submitButton = elements.channelForm.querySelector("button[type='submit']");
+
+  [elements.channelNameInput, elements.channelBioInput, elements.channelAccentInput, submitButton].forEach((control) => {
+    if (control) {
+      control.disabled = !hasAccount;
+    }
+  });
+
+  if (!isEditing) {
+    elements.channelNameInput.value = hasAccount ? channelName : "";
+    elements.channelBioInput.value = hasAccount ? channelBio : "";
+    elements.channelAccentInput.value = channelAccent;
+  }
+
+  elements.channelPreview.style.setProperty("--channel-accent", channelAccent);
+  elements.channelPreview.innerHTML = hasAccount
+    ? `
+      <span class="channel-avatar-preview" aria-hidden="true">${escapeHtml(channelName.charAt(0).toUpperCase())}</span>
+      <span class="channel-preview-copy">
+        <strong>${escapeHtml(channelName)}</strong>
+        <span>${escapeHtml(channelBio || "No channel bio yet.")}</span>
+      </span>
+    `
+    : `
+      <span class="channel-avatar-preview" aria-hidden="true">V</span>
+      <span class="channel-preview-copy">
+        <strong>Sign in to customize</strong>
+        <span>Your channel starts with 0 subscribers and no saved subscriptions.</span>
+      </span>
+    `;
+}
+
 function renderPlanStatus() {
   const userName = state.user?.name || "Guest";
   const subscriptionCount = getUserSubscriptions().length;
@@ -2564,7 +3063,23 @@ function renderPlanStatus() {
   elements.planBadge.textContent = `${state.plan} mode`;
   elements.userStatus.textContent = signedInLabel;
   elements.heroPlanName.textContent = state.plan;
-  elements.authButton.textContent = state.user ? `${userName}` : "Sign in to create";
+  elements.authButton.textContent = state.user
+    ? `${userName} - Switch`
+    : state.accounts.length
+      ? "Choose account"
+      : "Sign in to create";
+  elements.authButton.setAttribute(
+    "aria-label",
+    state.user ? `Switch account. Currently signed in as ${userName}.` : "Choose or add a Viders account."
+  );
+  elements.planButtons.forEach((button) => {
+    const plan = button.dataset.plan;
+    const isActivePlan = Boolean(state.user && state.plan === plan);
+    button.classList.toggle("is-active-plan", isActivePlan);
+    button.disabled = isActivePlan || requiresParentUnlockForAccount();
+    button.setAttribute("aria-pressed", String(isActivePlan));
+    button.textContent = isActivePlan ? `${plan} active` : `Activate ${plan}`;
+  });
   elements.summaryAccount.textContent = userName;
   elements.summaryPlan.textContent = state.plan;
   elements.summaryUploads.textContent = userUploads.length;
@@ -2722,6 +3237,7 @@ function render() {
   renderVideoGrid();
   renderCreatorAds();
   renderCreatorVideos();
+  renderChannelSettings();
   renderPlanStatus();
   renderParentControls();
   elements.searchInput.value = state.searchQuery;
@@ -2735,6 +3251,50 @@ function updateSeasonTheme(themeKey) {
   state.seasonTheme = seasonalThemeCatalog[themeKey] ? themeKey : "auto";
   render();
   showToast(`${getResolvedSeasonThemeDetails().label} background activated.`);
+}
+
+function saveChannelSettings(formData) {
+  if (!state.user) {
+    openAuthModal();
+    elements.channelSettingsMessage.textContent = "Sign in first to customize your channel.";
+    return;
+  }
+
+  const accountKey = getUserKey();
+  const previousChannelName = getCurrentChannelName();
+  const nextChannelName = normalizeChannelName(formData.get("channelName"), state.user.name || "Viders Creator");
+  const nextChannelBio = normalizeChannelBio(formData.get("channelBio"));
+  const nextChannelAccent = normalizeChannelAccent(formData.get("channelAccent"));
+
+  state.user = normalizeSavedAccount({
+    ...state.user,
+    channelName: nextChannelName,
+    channelBio: nextChannelBio,
+    channelAccent: nextChannelAccent
+  });
+
+  state.accounts = mergeSavedAccounts(
+    state.accounts.map((account) =>
+      getUserKey(account) === accountKey
+        ? {
+            ...account,
+            channelName: nextChannelName,
+            channelBio: nextChannelBio,
+            channelAccent: nextChannelAccent
+          }
+        : account
+    ),
+    [state.user]
+  );
+
+  if (state.activeChannel === previousChannelName) {
+    state.activeChannel = nextChannelName;
+  }
+
+  saveState();
+  render();
+  elements.channelSettingsMessage.textContent = "Channel customized.";
+  showToast("Your channel was customized.");
 }
 
 function applyPlan(plan) {
@@ -2752,11 +3312,13 @@ function applyPlan(plan) {
   }
 
   if (!state.user) {
+    sharedRuntime.pendingPlan = plan;
     elements.planMessage.textContent = "Sign in to unlock Viders, Creator, Pro, Premium, or Ultimate.";
     openAuthModal();
     return;
   }
 
+  sharedRuntime.pendingPlan = null;
   state.plan = plan;
   if (plan === "Viders") {
     elements.planMessage.textContent = `Viders mode active for ${state.user.name}. You can publish videos to the shared Viders channel.`;
@@ -2819,7 +3381,7 @@ function toggleSubscription(channelName) {
     return;
   }
 
-  if (state.user.name === channelName) {
+  if (getCurrentChannelName() === channelName) {
     showToast("This is your own channel.");
     return;
   }
@@ -2872,6 +3434,9 @@ async function publishHostedVideo(videoData, videoFile) {
     sharedRuntime.manifestPromise = null;
     state.uploads = uploadsToPublish;
     state.currentVideoId = videoData.id;
+    state.selectedCategory = "All";
+    state.activeChannel = "All";
+    state.searchQuery = "";
     elements.studioMessage.textContent = `Published "${videoData.title}" to the live Viders site.`;
     saveState();
     render();
@@ -2918,6 +3483,7 @@ async function publishVideo(formData) {
   const category = formData.get("category")?.toString().trim() || "Tech";
   const src = formData.get("src")?.toString().trim() || "";
   const videoFile = elements.videoFileInput.files?.[0] || null;
+  const uploadChannelName = state.plan === "Viders" ? "Viders" : getCurrentChannelName();
 
   const gradientMap = {
     Gaming: "linear-gradient(145deg, #2b3678, #0d73a7 55%, #38d2d1)",
@@ -2963,11 +3529,12 @@ async function publishVideo(formData) {
     id: `upload-${Date.now()}`,
     title,
     owner: state.user.name,
-    channel: state.plan === "Viders" ? "Viders" : state.user.name,
+    ownerKey: getUserKey(),
+    channel: uploadChannelName,
     category,
     length,
     views: 0,
-    subscribers: 1200,
+    subscribers: 0,
     uploadedAt: now.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
     description,
     src: finalSrc,
@@ -2975,16 +3542,7 @@ async function publishVideo(formData) {
     fileKey,
     assetPath,
     gradient: gradientMap[category] || gradientMap.Tech,
-    comments: [
-      {
-        author: "Viders Team",
-        text:
-          state.plan === "Viders"
-            ? "Fresh upload to the shared Viders channel. Keep the momentum going."
-            : "Fresh upload. Share your new channel link with your audience."
-      },
-      { author: "First Viewer", text: "Nice launch. Keep posting." }
-    ]
+    comments: []
   };
 
   state.uploads = [newVideo, ...state.uploads];
@@ -2998,12 +3556,10 @@ async function publishVideo(formData) {
   state.currentVideoId = newVideo.id;
   elements.studioMessage.textContent =
     publishNote ||
-    (newVideo.channel === "Viders"
-      ? `Published "${title}" to the shared Viders channel.`
-      : `Published "${title}" to the Viders feed.`);
+    `Saved "${title}" on this device. To share it with everyone, open the public Viders link and publish from there.`;
   render();
   elements.uploadForm.reset();
-  showToast("Video published to Viders.");
+  showToast("Video saved on this device.");
   scrollToSection("heroSection");
 }
 
@@ -3117,6 +3673,7 @@ function publishAd(formData) {
   const newAd = {
     id: `ad-${Date.now()}`,
     owner: state.user.name,
+    ownerKey: getUserKey(),
     sponsor,
     headline,
     copy
@@ -3248,17 +3805,7 @@ elements.authButton.addEventListener("click", () => {
     return;
   }
 
-  if (!state.user) {
-    openAuthModal();
-    return;
-  }
-
-  state.user = null;
-  state.plan = "Viewer";
-  state.activeChannel = "All";
-  saveState();
-  render();
-  showToast("Signed out. Guest viewer mode is still ready.");
+  openAuthModal();
 });
 
 elements.plansButton.addEventListener("click", () => scrollToSection("plansSection"));
@@ -3274,6 +3821,21 @@ elements.authModal.addEventListener("click", (event) => {
     closeAuthModal();
   }
 });
+elements.accountList?.addEventListener("click", (event) => {
+  const forgetButton = event.target.closest("[data-forget-account]");
+  if (forgetButton) {
+    forgetSavedAccount(forgetButton.dataset.forgetAccount);
+    return;
+  }
+
+  const button = event.target.closest("[data-switch-account]");
+  if (!button || button.disabled) {
+    return;
+  }
+
+  switchToSavedAccount(button.dataset.switchAccount);
+});
+elements.guestModeButton?.addEventListener("click", useGuestViewerMode);
 elements.installModal?.addEventListener("click", (event) => {
   if (event.target === elements.installModal) {
     closeInstallModal();
@@ -3294,15 +3856,46 @@ elements.authForm.addEventListener("submit", (event) => {
   }
 
   const formData = new FormData(event.currentTarget);
-  state.user = {
+  const nextAccount = normalizeSavedAccount({
     name: formData.get("name")?.toString().trim() || "Viders Creator",
     email: formData.get("email")?.toString().trim() || ""
-  };
+  });
+  const accountKey = getUserKey(nextAccount);
+  const savedAccount = state.accounts.find((account) => getUserKey(account) === accountKey);
+  const savedPlan = state.plansByUser?.[accountKey];
+  const pendingPlan = planCatalog[sharedRuntime.pendingPlan] ? sharedRuntime.pendingPlan : null;
+
+  rememberCurrentAccount();
+  state.accounts = mergeSavedAccounts(state.accounts, nextAccount ? [nextAccount] : []);
+  state.user = savedAccount
+    ? normalizeSavedAccount({
+        ...savedAccount,
+        name: nextAccount.name,
+        email: nextAccount.email
+      })
+    : nextAccount;
+  state.plan = pendingPlan || (planCatalog[savedPlan] ? savedPlan : "Viewer");
+  state.activeChannel = "All";
+  if (!savedAccount && accountKey) {
+    state.subscriptionsByUser = { ...(state.subscriptionsByUser || {}) };
+    delete state.subscriptionsByUser[accountKey];
+  }
+  sharedRuntime.pendingPlan = null;
   localStorage.removeItem(appRecoveryLoginKey);
   saveState();
   render();
   closeAuthModal();
-  showToast(`Welcome to Viders, ${state.user.name}.`);
+  event.currentTarget.reset();
+  showToast(
+    pendingPlan
+      ? `${pendingPlan} activated for ${state.user.name}.`
+      : `Welcome to Viders, ${state.user.name}.`
+  );
+});
+
+elements.channelForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  saveChannelSettings(new FormData(event.currentTarget));
 });
 
 elements.planButtons.forEach((button) => {
@@ -3530,3 +4123,4 @@ elements.creatorVideoList.addEventListener("click", async (event) => {
 registerAppInstall();
 render();
 loadHostedManifest();
+startLiveUploadSync();
