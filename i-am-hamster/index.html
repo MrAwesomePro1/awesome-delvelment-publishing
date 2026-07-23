@@ -1191,7 +1191,7 @@
       clock = new THREE.Clock();
     }
 
-    function lookVector() { return new THREE.Vector3(Math.sin(player.yaw) * Math.cos(player.pitch), Math.sin(player.pitch), -Math.cos(player.yaw) * Math.cos(player.pitch)); }
+    function lookVector() { return new THREE.Vector3(-Math.sin(player.yaw) * Math.cos(player.pitch), Math.sin(player.pitch), -Math.cos(player.yaw) * Math.cos(player.pitch)); }
 
     function setLook(dx, dy) { player.yaw -= dx * .0024; player.pitch = clamp(player.pitch - dy * .0024, -1.15, 1.15); }
 
