@@ -914,8 +914,11 @@
       }
       const length = Math.hypot(forward, strafe); if (length > 1) { forward /= length; strafe /= length; }
       const dash = input.dash || keys.has("ShiftLeft") || keys.has("ShiftRight"); const speed = player.moveSpeed * (dash ? 1.7 : 1);
-      const dx = (Math.sin(player.yaw) * forward + Math.cos(player.yaw) * strafe) * speed * dt;
-      const dz = (-Math.cos(player.yaw) * forward + Math.sin(player.yaw) * strafe) * speed * dt;
+      // W always follows the direction Toast is currently looking, even after a full turn.
+      const facing = lookVector(); facing.y = 0; facing.normalize();
+      const right = new THREE.Vector3(-facing.z, 0, facing.x);
+      const dx = (facing.x * forward + right.x * strafe) * speed * dt;
+      const dz = (facing.z * forward + right.z * strafe) * speed * dt;
       applyPlayerMovement(dx, dz);
       rig.position.y = Math.sin(performance.now() * .008) * (length ? .018 : 0);
     }
@@ -923,14 +926,16 @@
     function updateVRMovement(dt) {
       const session = renderer.xr.getSession();
       if (!session) return;
-      let strafe = 0; let forward = 0;
+      // A connected keyboard can also use W while in VR; movement follows the headset.
+      let strafe = (keys.has("KeyD") || keys.has("ArrowRight") ? 1 : 0) - (keys.has("KeyA") || keys.has("ArrowLeft") ? 1 : 0);
+      let forward = (keys.has("KeyW") || keys.has("ArrowUp") ? 1 : 0) - (keys.has("KeyS") || keys.has("ArrowDown") ? 1 : 0);
       for (const source of session.inputSources) {
         const axes = source.gamepad?.axes;
         if (!axes?.length) continue;
         const x = axes.length >= 4 ? axes[2] : axes[0];
         const y = axes.length >= 4 ? axes[3] : axes[1];
         if (Math.abs(x || 0) > Math.abs(strafe)) strafe = x || 0;
-        if (Math.abs(y || 0) > Math.abs(forward)) forward = y || 0;
+        if (Math.abs(y || 0) > Math.abs(forward)) forward = -(y || 0);
       }
       if (Math.abs(strafe) < .16) strafe = 0;
       if (Math.abs(forward) < .16) forward = 0;
@@ -939,7 +944,7 @@
       const facing = new THREE.Vector3(); xrCamera.getWorldDirection(facing); facing.y = 0; facing.normalize();
       const right = new THREE.Vector3(-facing.z, 0, facing.x);
       const speed = player.moveSpeed * dt;
-      applyPlayerMovement(right.x * strafe * speed + facing.x * -forward * speed, right.z * strafe * speed + facing.z * -forward * speed);
+      applyPlayerMovement(right.x * strafe * speed + facing.x * forward * speed, right.z * strafe * speed + facing.z * forward * speed);
     }
 
     function updateUI() {
