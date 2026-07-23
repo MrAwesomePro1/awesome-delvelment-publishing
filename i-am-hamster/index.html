@@ -104,7 +104,7 @@
     .mobile-button small { display: block; margin-top: 2px; font-size: 8px; letter-spacing: .07em; }
     .orientation-note { display: none; }
 
-    .start-screen { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at 50% 35%, rgba(173,111,82,.18), transparent 42%), rgba(17,15,23,.54); backdrop-filter: blur(10px); }
+    .start-screen { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; overflow-y: auto; padding: 24px; background: radial-gradient(circle at 50% 35%, rgba(173,111,82,.18), transparent 42%), rgba(17,15,23,.54); backdrop-filter: blur(10px); }
     .start-card { width: min(500px, 100%); padding: 34px; border: 1px solid rgba(255,244,223,.16); border-radius: 30px; background: linear-gradient(145deg, rgba(49,40,52,.96), rgba(28,25,37,.96)); box-shadow: 0 35px 100px rgba(0,0,0,.35); text-align: center; }
     .start-art { height: 175px; position: relative; display: grid; place-items: center; overflow: hidden; margin-bottom: 24px; border-radius: 21px; background: linear-gradient(150deg, #e8a373, #9d6d7d 52%, #4d526e); }
     .start-art::before, .start-art::after { content: ""; position: absolute; border-radius: 50%; background: rgba(255,220,149,.16); }
@@ -124,7 +124,17 @@
     .start-button:hover { transform: translateY(-2px); }
     .start-button.primary { color: #31211f; background: var(--peach); box-shadow: 0 12px 25px rgba(233,121,89,.19); }
     .start-button.secondary { border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.07); }
+    .start-button:disabled { cursor: not-allowed; opacity: .42; transform: none; }
+    .device-picker { margin: 0 0 18px; padding: 13px; border: 1px solid rgba(255,255,255,.1); border-radius: 17px; background: rgba(255,255,255,.035); }
+    .device-question { margin: 0 0 10px; color: #fff4df; font-size: 11px; font-weight: 900; }
+    .device-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+    .device-choice { min-height: 51px; padding: 9px 6px; border: 1px solid rgba(255,255,255,.13); border-radius: 11px; color: #c9bab0; background: rgba(255,255,255,.045); font-size: 9px; font-weight: 900; line-height: 1.25; transition: border-color .2s, background .2s, transform .2s; }
+    .device-choice:hover { transform: translateY(-1px); }
+    .device-choice.selected { border-color: var(--peach); color: #2d2224; background: var(--peach); box-shadow: 0 7px 18px rgba(233,121,89,.18); }
     .start-foot { margin: 17px 0 0; color: #8e7f79; font-size: 9px; }
+    body[data-device="mobile"] .mobile-controls { display: flex; }
+    body[data-device="mobile"] .prompt { bottom: 116px; }
+    body[data-device="vr"] .vr-button.available { color: #211c2b; background: #c7a5ff; }
     .hidden { display: none !important; }
     @keyframes bob { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-8px) rotate(1deg); } }
 
@@ -134,10 +144,12 @@
       .brand-kicker { font-size: 7px; }.brand-name { font-size: 13px; }.player-tag { display: none; }
       .status-row { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); gap: 5px; }.status-pill { display: none; }.vr-button { padding: 9px; font-size: 9px; }.sound-button { width: 34px; height: 34px; }
       .task-panel { top: 72px; right: max(12px, env(safe-area-inset-right)); width: min(220px, calc(100vw - 24px)); padding: 11px; border-radius: 16px; }.task-title { margin-bottom: 8px; }.task-title h2 { font-size: 15px; }.task { gap: 7px; padding: 7px 8px; }.task-name { font-size: 9px; }.task-detail { font-size: 8px; }.task-check { width: 17px; height: 17px; font-size: 10px; }
-      .prompt { bottom: 116px; }.mobile-controls { display: flex; }
+      .prompt { bottom: 116px; }
     }
     @media (max-width: 440px) {
-      .task-panel { width: 196px; }.task-list { max-height: 218px; overflow-y: auto; }.start-card { padding: 23px; border-radius: 23px; }.start-art { height: 140px; }.start-actions { flex-direction: column; }.start-foot { line-height: 1.45; }
+      .task-panel { width: 196px; }.task-list { max-height: 218px; overflow-y: auto; }.start-card { padding: 23px; border-radius: 23px; }.start-art { height: 125px; }.start-actions { flex-direction: column; }.start-foot { line-height: 1.45; }
+      .device-options { grid-template-columns: 1fr; }
+      .device-choice { min-height: 40px; }
     }
     @media (orientation: portrait) and (max-width: 760px) {
       .orientation-note { display: block; position: fixed; left: 50%; bottom: 14px; z-index: 8; padding: 8px 11px; border: 1px solid rgba(255,244,223,.15); border-radius: 10px; color: #dbc8b9; background: rgba(25,21,29,.8); transform: translateX(-50%); font-size: 9px; pointer-events: none; }
@@ -165,7 +177,7 @@
 
     <section class="task-panel" aria-label="Today's hamster tasks">
       <p class="panel-kicker">Tiny mission board</p>
-      <div class="task-title"><h2>Today's tasks</h2><span class="task-count" id="taskCount">0 / 6</span></div>
+      <div class="task-title"><h2 id="taskHeading">Cage tasks</h2><span class="task-count" id="taskCount">0 / 6</span></div>
       <div class="task-list" id="taskList"></div>
     </section>
 
@@ -190,8 +202,16 @@
       <div class="start-art" aria-hidden="true"><div class="start-hamster"><i></i><b></b><span></span></div></div>
       <p class="start-kicker">A cozy 3D hamster cage</p>
       <h1>I AM <em>HAMSTER</em></h1>
-      <p class="start-copy">You are Toast: a very small hamster with a very big day. Explore every corner of your cage, finish six tiny tasks, find the hidden key, and escape.</p>
-      <div class="start-actions"><button class="start-button primary" id="startButton" type="button">START EXPLORING <span>→</span></button><button class="start-button secondary" id="howButton" type="button">HOW TO PLAY</button></div>
+      <p class="start-copy">You are Toast: a very small hamster with a very big day. Escape the cage, explore the giant family room, meet Leo, and follow Mom to the car.</p>
+      <div class="device-picker">
+        <p class="device-question">What device are you on?</p>
+        <div class="device-options" role="group" aria-label="Choose your device">
+          <button class="device-choice" type="button" data-device="computer" aria-pressed="false">COMPUTER<br>Mouse + keyboard</button>
+          <button class="device-choice" type="button" data-device="mobile" aria-pressed="false">PHONE / TABLET<br>Touch controls</button>
+          <button class="device-choice" type="button" data-device="vr" aria-pressed="false">VR HEADSET<br>Head + controllers</button>
+        </div>
+      </div>
+      <div class="start-actions"><button class="start-button primary" id="startButton" type="button" disabled>SELECT A DEVICE</button><button class="start-button secondary" id="howButton" type="button">HOW TO PLAY</button></div>
       <p class="start-foot" id="helpText">WASD / arrows to move · mouse-drag or finger-swipe to look · Space to interact</p>
     </section>
   </div>
@@ -207,6 +227,7 @@
 
     const state = {
       started: false,
+      device: "",
       sound: true,
       runMeters: 0,
       sunflower: false,
@@ -215,6 +236,10 @@
       nightLight: false,
       keyFound: false,
       escaped: false,
+      outsideEntered: false,
+      metBoy: false,
+      momReady: false,
+      atCar: false,
       skin: "honey",
       location: "cage",
       treats: 3,
@@ -230,6 +255,9 @@
     const colliders = [];
     let scene, renderer, camera, rig, clock;
     let wheelGroup, wheelMesh, sunflowerGroup, nestGroup, lanternLight, lanternGlow, keyGroup, cageDoorGroup;
+    let boyGroup, momGroup, boyInteractive, momInteractive, boyParts, momParts;
+    const momStart = { x: 94.25, z: -1.15 };
+    const momCar = { x: 97.25, z: -4.65 };
     let avatarPreviewParts = [];
     let toastTimerId;
     let toastAudio;
@@ -321,13 +349,15 @@
     const levels = {
       cage: { x: 0, z: 3.65, label: "LEVEL 1 · CAGE" },
       secret: { x: 24, z: 3.25, label: "SECRET · WARDROBE" },
-      moon: { x: 48, z: 3.15, label: "LEVEL 2 · MOON GARDEN" },
-      snack: { x: 72, z: 3.15, label: "LEVEL 3 · SNACK LAB" },
+      moon: { x: 48, z: 3.15, label: "LEVEL 3 · MOON GARDEN" },
+      snack: { x: 72, z: 3.15, label: "LEVEL 4 · SNACK LAB" },
+      outside: { x: 96, z: 3.25, label: "LEVEL 2 · OUTSIDE THE CAGE", bounds: { minX: 90.45, maxX: 101.55, minZ: -7.15, maxZ: 4.65 } },
     };
 
     function teleportTo(levelName, announce = true) {
       const destination = levels[levelName] ?? levels.cage;
       state.location = levelName in levels ? levelName : "cage";
+      if (state.location === "outside") state.outsideEntered = true;
       if (rig) { rig.position.set(destination.x, 0, destination.z); player.yaw = 0; player.pitch = -.02; }
       if (announce) showToast(`Whoosh! ${destination.label.replace(" · ", ": ")}`, 2400);
       save(); updateUI();
@@ -542,9 +572,10 @@
         addInteractive({ position: new THREE.Vector3(x, 0, z), label, detail, radius: 1.45, onInteract: () => teleportTo(destination) });
       };
 
-      createPortal(21.25, -3.45, 0xffb474, "Go to Level 1: Cage", "Return to Toast's cozy habitat", "cage");
-      createPortal(24, -3.45, 0x9ca8ff, "Go to Level 2: Moon Garden", "Explore glowing mushrooms and moon rocks", "moon");
-      createPortal(26.75, -3.45, 0x93d7ba, "Go to Level 3: Snack Lab", "Visit the giant treat laboratory", "snack");
+      createPortal(20.3, -3.45, 0xffb474, "Go to Level 1: Cage", "Return to Toast's cozy habitat", "cage");
+      createPortal(22.75, -3.45, 0x72cce2, "Go to Level 2: Outside", "Meet Leo and follow Mom to the car", "outside");
+      createPortal(25.25, -3.45, 0x9ca8ff, "Go to Level 3: Moon Garden", "Explore glowing mushrooms and moon rocks", "moon");
+      createPortal(27.7, -3.45, 0x93d7ba, "Go to Level 4: Snack Lab", "Visit the giant treat laboratory", "snack");
 
       // Level 2: Moon Garden.
       box(12, .18, 9, 0x353a68, 48, -.02, 0, { castShadow: false });
@@ -657,6 +688,13 @@
         if (!state.keyFound) { showToast("The door is locked. Search the bedding for a golden key.", 3000); return; }
         state.escaped = true; showToast("Click! The cage door is open — Toast is free!", 3600); save(); updateUI();
       }});
+
+      addInteractive({ position: new THREE.Vector3(0, 0, 5.45), label: "Enter the room outside the cage", detail: "A giant family room waits beyond the mat", radius: 1.55, onInteract: () => {
+        if (!state.escaped) { showToast("The cage door is still locked."); return; }
+        state.outsideEntered = true;
+        teleportTo("outside");
+        showToast("Level 2: Outside the cage! New tasks added.", 3400);
+      }});
     }
 
     function updateLantern() { if (!lanternLight) return; lanternLight.intensity = state.nightLight ? 2.5 : .25; lanternGlow.material.opacity = state.nightLight ? .4 : .1; }
@@ -668,11 +706,130 @@
       if (keyGroup?.visible) keyGroup.rotation.z = Math.sin(performance.now() * .004) * .08;
     }
 
+    function createOutsideRoom() {
+      // Level 2 is a giant family room leading through the front door to the driveway.
+      box(12, .18, 7, 0xb8865e, 96, -.02, 1.35, { castShadow: false });
+      box(12, 3.9, .2, 0xd2b79a, 96, 1.95, 4.9, { castShadow: false });
+      box(.2, 3.9, 7.2, 0xc9a989, 90.2, 1.95, 1.3, { castShadow: false });
+      box(.2, 3.9, 7.2, 0xc9a989, 101.8, 1.95, 1.3, { castShadow: false });
+      box(4.2, 3.9, .2, 0xc8aa8e, 92.2, 1.95, -2.15, { castShadow: false });
+      box(4.2, 3.9, .2, 0xc8aa8e, 99.8, 1.95, -2.15, { castShadow: false });
+      box(3.4, .16, .7, 0x7e5a43, 96, 3.65, -2.15);
+      box(2.45, 3.35, .12, 0x59797c, 94.72, 1.72, -1.02, { rotation: [0, Math.PI / 2, 0], roughness: .38 });
+      box(2.05, 2.95, .08, 0x91c2c5, 94.78, 1.7, -1.02, { rotation: [0, Math.PI / 2, 0], roughness: .2, metalness: .08 });
+
+      // A little living room at human scale makes Toast feel pocket-sized.
+      box(3.25, .72, 1.2, 0x6f8292, 99.7, .42, 3.25);
+      box(3.35, 1.25, .32, 0x788c9d, 99.7, 1.05, 3.72);
+      box(1.7, .85, 1.05, 0xd48b64, 91.65, .45, 2.85);
+      box(1.45, .12, .85, 0xf0be77, 91.65, .94, 2.85);
+      addBoxHitbox(99.7, 3.25, 3.45, 1.25);
+      addBoxHitbox(91.65, 2.85, 1.85, 1.1);
+      const roomLight = new THREE.PointLight(0xffd3a0, 4.2, 15, 2); roomLight.position.set(96, 3.55, 1.3); scene.add(roomLight);
+
+      // The driveway and family car are visible through the open front door.
+      box(12, .14, 5.2, 0x6d737d, 96, -.04, -4.75, { castShadow: false });
+      box(2.4, .12, 5.2, 0x6a8d5d, 90.8, -.02, -4.75, { castShadow: false });
+      box(2.4, .12, 5.2, 0x6a8d5d, 101.2, -.02, -4.75, { castShadow: false });
+      const sunLight = new THREE.PointLight(0xffe2a5, 4.5, 15, 2); sunLight.position.set(96, 5.2, -5); scene.add(sunLight);
+
+      const car = new THREE.Group(); car.position.set(99.1, 0, -5.35); scene.add(car);
+      const carPart = (geometry, color, x, y, z, materialOptions = {}) => {
+        const part = new THREE.Mesh(geometry, makeMaterial(color, materialOptions.roughness ?? .55, materialOptions.metalness ?? .15));
+        part.position.set(x, y, z); part.castShadow = true; part.receiveShadow = true; car.add(part); return part;
+      };
+      carPart(new THREE.BoxGeometry(3.4, .72, 1.6), 0x4f86b8, 0, .62, 0);
+      carPart(new THREE.BoxGeometry(1.75, .72, 1.42), 0x416f9c, .25, 1.22, 0);
+      carPart(new THREE.BoxGeometry(1.35, .48, 1.44), 0x9bc5d1, .15, 1.28, 0, { roughness: .18 });
+      carPart(new THREE.BoxGeometry(.35, .18, 1.5), 0xffd672, -1.62, .72, 0);
+      for (const x of [-1.05, 1.05]) for (const z of [-.82, .82]) {
+        const wheel = new THREE.Mesh(new THREE.TorusGeometry(.32, .12, 9, 18), makeMaterial(0x292733, .82));
+        wheel.position.set(x, .42, z); wheel.castShadow = true; car.add(wheel);
+      }
+      addBoxHitbox(99.1, -5.35, 3.55, 1.75);
+
+      const createPerson = ({ shirt, pants, skin, hair, scale = 1 }) => {
+        const group = new THREE.Group(); scene.add(group);
+        const part = (geometry, color, x, y, z) => {
+          const mesh = new THREE.Mesh(geometry, makeMaterial(color, .72));
+          mesh.position.set(x, y, z); mesh.castShadow = true; group.add(mesh); return mesh;
+        };
+        const body = part(new THREE.BoxGeometry(.64, .88, .38), shirt, 0, 1.48, 0);
+        const head = part(new THREE.SphereGeometry(.32, 14, 10), skin, 0, 2.16, -.02);
+        const hairCap = part(new THREE.SphereGeometry(.325, 14, 8), hair, 0, 2.29, .03); hairCap.scale.set(1.02, .58, 1.02);
+        const leftArm = part(new THREE.CylinderGeometry(.09, .1, .82, 9), skin, -.43, 1.45, 0);
+        const rightArm = part(new THREE.CylinderGeometry(.09, .1, .82, 9), skin, .43, 1.45, 0);
+        const leftLeg = part(new THREE.CylinderGeometry(.12, .14, .9, 9), pants, -.19, .63, 0);
+        const rightLeg = part(new THREE.CylinderGeometry(.12, .14, .9, 9), pants, .19, .63, 0);
+        part(new THREE.BoxGeometry(.26, .15, .43), 0xede9dc, -.19, .14, -.1);
+        part(new THREE.BoxGeometry(.26, .15, .43), 0xede9dc, .19, .14, -.1);
+        for (const x of [-.12, .12]) part(new THREE.SphereGeometry(.035, 7, 6), 0x24202a, x, 2.2, -.3);
+        group.scale.setScalar(scale);
+        return { group, body, head, leftArm, rightArm, leftLeg, rightLeg };
+      };
+
+      // Leo is five years old and continuously walks around the family room.
+      boyParts = createPerson({ shirt: 0xe37b55, pants: 0x466589, skin: 0xd9a079, hair: 0x4c342d });
+      boyGroup = boyParts.group; boyGroup.position.set(93.2, 0, 1.2);
+      boyInteractive = addInteractive({ position: boyGroup.position.clone(), label: "Say hello to Leo, age 5", detail: "He is walking around the family room", radius: 2.2, onInteract: () => {
+        if (state.metBoy) { showToast("Leo: Hi again, Toast! Mom is by the front door."); return; }
+        state.metBoy = true; showToast("Leo: Hi Toast! Mom says it is time to go to the car.", 3600); save(); updateUI();
+      }});
+
+      momParts = createPerson({ shirt: 0x9b72b0, pants: 0x39455f, skin: 0xc98f6e, hair: 0x593a32, scale: 1.16 });
+      momGroup = momParts.group;
+      momGroup.position.set(state.momReady ? momCar.x : momStart.x, 0, state.momReady ? momCar.z : momStart.z);
+      momInteractive = addInteractive({ position: momGroup.position.clone(), label: "Talk to Mom", detail: "She is ready to walk to the car", radius: 2.35, onInteract: () => {
+        if (!state.metBoy) { showToast("Mom: Go say hello to Leo first, little Toast."); return; }
+        if (state.momReady) { showToast("Mom: Come on, Toast. Follow me to the blue car!"); return; }
+        state.momReady = true; showToast("Mom: Time to go! Stay close and follow me to the car.", 3600); save(); updateUI();
+      }});
+
+      addInteractive({ position: new THREE.Vector3(97.05, 0, -5.15), label: "Go to the car with Mom", detail: "The blue family car is ready", radius: 2.25, onInteract: () => {
+        if (!state.momReady) { showToast("Talk to Mom by the front door first."); return; }
+        if (distance2D(momGroup.position, new THREE.Vector3(momCar.x, 0, momCar.z)) > .5) { showToast("Wait for Mom — she is walking over now."); return; }
+        if (state.atCar) { showToast("You made it to the car with Mom! Mission complete."); return; }
+        state.atCar = true; showToast("Mission complete! Toast reached the car with Mom.", 4200); save(); updateUI();
+      }});
+
+      addInteractive({ position: new THREE.Vector3(96, 0, 4.25), label: "Return to the cage", detail: "Go back through the giant family room", radius: 1.45, onInteract: () => teleportTo("cage") });
+    }
+
+    function updateOutsideCharacters(dt) {
+      if (boyGroup) {
+        const time = performance.now() * .00052;
+        const oldX = boyGroup.position.x; const oldZ = boyGroup.position.z;
+        boyGroup.position.x = 95.35 + Math.sin(time) * 2.7;
+        boyGroup.position.z = 1.25 + Math.sin(time * 2) * 1.15;
+        const dx = boyGroup.position.x - oldX; const dz = boyGroup.position.z - oldZ;
+        if (Math.abs(dx) + Math.abs(dz) > .0001) boyGroup.rotation.y = Math.atan2(-dx, -dz);
+        const swing = Math.sin(time * 13) * .55;
+        boyParts.leftLeg.rotation.x = swing; boyParts.rightLeg.rotation.x = -swing;
+        boyParts.leftArm.rotation.x = -swing * .75; boyParts.rightArm.rotation.x = swing * .75;
+        boyInteractive?.target.position.copy(boyGroup.position);
+      }
+      if (momGroup) {
+        let walking = false;
+        if (state.momReady) {
+          const dx = momCar.x - momGroup.position.x; const dz = momCar.z - momGroup.position.z; const distance = Math.hypot(dx, dz);
+          if (distance > .08) {
+            const step = Math.min(distance, dt * .82);
+            momGroup.position.x += dx / distance * step; momGroup.position.z += dz / distance * step;
+            momGroup.rotation.y = Math.atan2(-dx, -dz); walking = true;
+          }
+        }
+        const swing = walking ? Math.sin(performance.now() * .008) * .42 : 0;
+        momParts.leftLeg.rotation.x = swing; momParts.rightLeg.rotation.x = -swing;
+        momParts.leftArm.rotation.x = -swing * .7; momParts.rightArm.rotation.x = swing * .7;
+        momInteractive?.target.position.copy(momGroup.position);
+      }
+    }
+
     function createWorld() {
       scene = new THREE.Scene(); scene.background = new THREE.Color(0x39314a); scene.fog = new THREE.Fog(0x39314a, 8, 20);
       const hemi = new THREE.HemisphereLight(0xffe5c3, 0x302a40, 1.9); scene.add(hemi);
       const key = new THREE.DirectionalLight(0xffc187, 2.5); key.position.set(-4, 7, 4); key.castShadow = true; key.shadow.mapSize.set(1024, 1024); key.shadow.camera.left = -8; key.shadow.camera.right = 8; key.shadow.camera.top = 8; key.shadow.camera.bottom = -8; scene.add(key);
-      createRoom(); createSecretRoomAndLevels(); createWheel(); createSunflower(); createNest(); createBowl(); createLantern(); createEscapeTask(); createHitboxes(); updateLantern();
+      createRoom(); createSecretRoomAndLevels(); createOutsideRoom(); createWheel(); createSunflower(); createNest(); createBowl(); createLantern(); createEscapeTask(); createHitboxes(); updateLantern();
     }
 
     function setupRenderer() {
@@ -714,7 +871,7 @@
       if (!item) { prompt.classList.remove("visible"); return; }
       $("#promptText").textContent = item.label;
       $("#promptSub").textContent = item.detail;
-      $(".prompt-key").textContent = window.matchMedia("(pointer: coarse)").matches ? "DO IT" : "SPACE";
+      $(".prompt-key").textContent = state.device === "mobile" ? "DO IT" : state.device === "vr" ? "SELECT" : "SPACE";
       prompt.classList.add("visible");
     }
 
@@ -729,10 +886,11 @@
 
     function applyPlayerMovement(dx, dz) {
       if (state.location !== "cage") {
-        const center = levels[state.location]?.x ?? levels.secret.x;
-        const nextX = clamp(rig.position.x + dx, center - 5.55, center + 5.55);
+        const level = levels[state.location] ?? levels.secret;
+        const bounds = level.bounds ?? { minX: level.x - 5.55, maxX: level.x + 5.55, minZ: -4.08, maxZ: 4.08 };
+        const nextX = clamp(rig.position.x + dx, bounds.minX, bounds.maxX);
         if (!hitsSolid(nextX, rig.position.z)) rig.position.x = nextX;
-        const nextZ = clamp(rig.position.z + dz, -4.08, 4.08);
+        const nextZ = clamp(rig.position.z + dz, bounds.minZ, bounds.maxZ);
         if (!hitsSolid(rig.position.x, nextZ)) rig.position.z = nextZ;
         return;
       }
@@ -785,16 +943,23 @@
     }
 
     function updateUI() {
-      const done = [state.runMeters >= 300, state.sunflower, state.nest, state.treat, state.nightLight, state.escaped];
-      $("#taskCount").textContent = `${done.filter(Boolean).length} / 6`;
-      const tasks = [
+      const outsideTasks = state.location === "outside";
+      const tasks = outsideTasks ? [
+        ["Enter the room outside", state.outsideEntered, "A giant family room is beyond the cage", 1],
+        ["Meet Leo, age 5", state.metBoy, state.metBoy ? "Leo says Mom is ready to leave" : "Find the boy walking around the room", state.metBoy ? 1 : 0],
+        ["Talk to Mom", state.momReady, state.momReady ? "Follow Mom through the front door" : "Mom is waiting near the front door", state.momReady ? 1 : 0],
+        ["Go to the car with Mom", state.atCar, state.atCar ? "Mission complete — you reached the car" : state.momReady ? "Follow Mom to the blue family car" : "Meet Leo, then talk to Mom", state.atCar ? 1 : state.momReady ? .5 : 0],
+      ] : [
         ["Run 300 m on the wheel", state.runMeters >= 300, `${Math.floor(state.runMeters)} / 300 m`, state.runMeters / 300],
         ["Pick the golden sunflower", state.sunflower, "Find it in the sunbeam corner", 1],
         ["Fluff the nest", state.nest, "Make home extra cozy", 1],
         ["Eat a berry treat", state.treat, `${state.treats} treat${state.treats === 1 ? "" : "s"} left`, 1],
         ["Turn on the night-light", state.nightLight, "Light up the evening nook", 1],
-        ["Find the key and escape", state.escaped, state.escaped ? "Door unlocked — Toast is free" : state.keyFound ? "Key found — return to the front door" : "Search the bedding for something gold", state.escaped ? 1 : state.keyFound ? .5 : 0],
+        ["Find the key and escape", state.escaped, state.escaped ? "Door unlocked — step onto the mat outside" : state.keyFound ? "Key found — return to the front door" : "Search the bedding for something gold", state.escaped ? 1 : state.keyFound ? .5 : 0],
       ];
+      const done = tasks.map((task) => task[1]);
+      $("#taskHeading").textContent = outsideTasks ? "Outside tasks" : "Cage tasks";
+      $("#taskCount").textContent = `${done.filter(Boolean).length} / ${tasks.length}`;
       $("#taskList").innerHTML = tasks.map(([name, complete, detail, progress]) => `<div class="task ${complete ? "done" : ""} ${!complete && done.filter(Boolean).length < 6 && tasks.findIndex((task) => task[1] === false) === tasks.findIndex((task) => task[0] === name) ? "active" : ""}"><span class="task-check">✓</span><div><span class="task-name">${name}</span><span class="task-detail">${detail}</span>${name.startsWith("Run") || name.startsWith("Find") ? `<div class="task-progress"><span style="width:${Math.round(clamp(progress, 0, 1) * 100)}%"></span></div>` : ""}</div></div>`).join("");
       $("#levelLabel").textContent = levels[state.location]?.label ?? levels.cage.label;
       $("#dayNumber").textContent = String(state.day).padStart(2, "0");
@@ -828,8 +993,30 @@
       const moveJoystick = (event) => { if (event.pointerId !== joystickPointer) return; const rect = joystick.getBoundingClientRect(); const max = 31; const x = event.clientX - (rect.left + rect.width / 2); const y = event.clientY - (rect.top + rect.height / 2); const scale = Math.min(1, max / Math.max(1, Math.hypot(x, y))); const nx = x * scale; const ny = y * scale; knob.style.transform = `translate(${nx}px, ${ny}px)`; input.strafe = clamp(nx / max, -1, 1); input.forward = clamp(-ny / max, -1, 1); };
       joystick.addEventListener("pointerdown", (event) => { event.stopPropagation(); joystickPointer = event.pointerId; joystick.setPointerCapture?.(event.pointerId); moveJoystick(event); });
       joystick.addEventListener("pointermove", moveJoystick); const stopJoystick = () => { joystickPointer = null; input.strafe = 0; input.forward = 0; knob.style.transform = "translate(0, 0)"; }; joystick.addEventListener("pointerup", stopJoystick); joystick.addEventListener("pointercancel", stopJoystick);
-      $("#startButton").addEventListener("click", () => { state.started = true; save(); $("#startScreen").classList.add("hidden"); showToast("Drag the mouse or swipe one finger to turn Toast's head.", 3200); });
-      $("#howButton").addEventListener("click", () => { $("#helpText").textContent = "Computer: mouse-drag to look (double-click for mouse lock). Mobile: swipe one finger. VR: move your headset. Use Space or Select to interact."; });
+      const deviceHelp = {
+        computer: "Computer: WASD / arrows move · mouse-drag looks · Space interacts",
+        mobile: "Phone / tablet: left joystick moves · swipe the world to look · DO IT interacts",
+        vr: "VR: turn your head to look · thumbstick moves · controller Select interacts",
+      };
+      const selectDevice = (device) => {
+        if (!deviceHelp[device]) return;
+        state.device = device; document.body.dataset.device = device;
+        document.querySelectorAll(".device-choice").forEach((button) => {
+          const selected = button.dataset.device === device;
+          button.classList.toggle("selected", selected); button.setAttribute("aria-pressed", String(selected));
+        });
+        $("#startButton").disabled = false;
+        $("#startButton").innerHTML = device === "vr" ? "START, THEN ENTER VR <span>→</span>" : "START EXPLORING <span>→</span>";
+        $("#helpText").textContent = deviceHelp[device]; save();
+      };
+      document.querySelectorAll(".device-choice").forEach((button) => button.addEventListener("click", () => selectDevice(button.dataset.device)));
+      if (state.device) selectDevice(state.device);
+      $("#startButton").addEventListener("click", () => {
+        if (!state.device) { showToast("Choose your device first."); return; }
+        state.started = true; save(); $("#startScreen").classList.add("hidden");
+        showToast(state.device === "vr" ? "Press ENTER VR, then turn your head and use the thumbstick." : state.device === "mobile" ? "Use the joystick to move and swipe to turn Toast's head." : "Use WASD to move and drag the mouse to turn Toast's head.", 3600);
+      });
+      $("#howButton").addEventListener("click", () => { $("#helpText").textContent = state.device ? deviceHelp[state.device] : "Choose Computer, Phone / Tablet, or VR Headset. The game will show the right controls."; });
       $("#soundButton").addEventListener("click", () => { state.sound = !state.sound; $("#soundButton").textContent = state.sound ? "♫" : "×"; showToast(state.sound ? "Tiny sounds on." : "Tiny sounds off.", 1200); save(); });
       window.addEventListener("resize", onResize);
       $("#prompt").addEventListener("click", tryInteract);
@@ -857,11 +1044,11 @@
     function onResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight, false); }
 
     function animate() {
-      const dt = Math.min(clock.getDelta(), .05); if (!renderer.xr.isPresenting) { updateMovement(dt); camera.rotation.set(player.pitch, player.yaw, 0, "YXZ"); } else updateVRMovement(dt); updateWheel(dt); updateDoor(dt); updatePrompt(); updateUI();
+      const dt = Math.min(clock.getDelta(), .05); if (!renderer.xr.isPresenting) { updateMovement(dt); camera.rotation.set(player.pitch, player.yaw, 0, "YXZ"); } else updateVRMovement(dt); updateWheel(dt); updateDoor(dt); updateOutsideCharacters(dt); updatePrompt(); updateUI();
       renderer.render(scene, camera);
     }
 
-    load(); setupRenderer(); createWorld(); setupCamera(); applySkin(state.skin); teleportTo(state.location, false); setupInput(); updateUI(); if (!state.started) $("#startScreen").classList.remove("hidden"); else $("#startScreen").classList.add("hidden"); setupVR(); renderer.setAnimationLoop(animate);
+    load(); setupRenderer(); createWorld(); setupCamera(); applySkin(state.skin); teleportTo(state.location, false); setupInput(); updateUI(); $("#startScreen").classList.remove("hidden"); setupVR(); renderer.setAnimationLoop(animate);
   </script>
 </body>
 </html>
