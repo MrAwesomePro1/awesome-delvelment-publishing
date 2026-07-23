@@ -37,6 +37,7 @@ const sourceCodeLinks = {
   "staff-messages": "https://github.com/MrAwesomePro1/awesome-delvelment-publishing/tree/main/staff-messages",
   "awesome-stafftime": "https://github.com/MrAwesomePro1/awesome-delvelment-publishing/tree/main/staff-time",
   "starfall-jester": "https://github.com/MrAwesomePro1/awesome-delvelment-publishing/tree/main/starfall-jester",
+  "i-am-hamster-3d": "https://github.com/MrAwesomePro1/awesome-delvelment-publishing/tree/main/i-am-hamster",
   "viders-parents": "https://github.com/MrAwesomePro1/awesome-delvelment-publishing/blob/main/viders/parents.html",
   "pro-one-short-master": "https://github.com/MrAwesomePro1/awesome-delvelment-publishing"
 };
