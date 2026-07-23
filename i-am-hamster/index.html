@@ -131,6 +131,11 @@
     .device-choice { min-height: 51px; padding: 9px 6px; border: 1px solid rgba(255,255,255,.13); border-radius: 11px; color: #c9bab0; background: rgba(255,255,255,.045); font-size: 9px; font-weight: 900; line-height: 1.25; transition: border-color .2s, background .2s, transform .2s; }
     .device-choice:hover { transform: translateY(-1px); }
     .device-choice.selected { border-color: var(--peach); color: #2d2224; background: var(--peach); box-shadow: 0 7px 18px rgba(233,121,89,.18); }
+    .location-picker { margin: 0 0 18px; padding: 13px; border: 1px solid rgba(199,165,255,.16); border-radius: 17px; background: rgba(199,165,255,.035); }
+    .location-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+    .location-choice { min-height: 46px; padding: 8px 7px; border: 1px solid rgba(255,255,255,.13); border-radius: 11px; color: #c9bab0; background: rgba(255,255,255,.045); font-size: 9px; font-weight: 900; line-height: 1.25; transition: border-color .2s, background .2s, transform .2s; }
+    .location-choice:hover { transform: translateY(-1px); }
+    .location-choice.selected { border-color: #c7a5ff; color: #241c2c; background: #c7a5ff; box-shadow: 0 7px 18px rgba(199,165,255,.17); }
     .multiplayer-picker { margin: 0 0 18px; padding: 13px; border: 1px solid rgba(147,215,186,.16); border-radius: 17px; background: rgba(147,215,186,.035); }
     .mode-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
     .mode-choice { min-height: 40px; padding: 8px 6px; border: 1px solid rgba(255,255,255,.13); border-radius: 11px; color: #c9bab0; background: rgba(255,255,255,.045); font-size: 9px; font-weight: 900; line-height: 1.2; transition: border-color .2s, background .2s, transform .2s; }
@@ -167,6 +172,7 @@
       .task-panel { width: 196px; }.task-list { max-height: 218px; overflow-y: auto; }.start-card { padding: 23px; border-radius: 23px; }.start-art { height: 125px; }.start-actions { flex-direction: column; }.start-foot { line-height: 1.45; }
       .device-options { grid-template-columns: 1fr; }
       .device-choice { min-height: 40px; }
+      .location-choice { min-height: 40px; font-size: 8px; }
       .mode-choice { font-size: 8px; }
     }
     @media (orientation: portrait) and (max-width: 760px) {
@@ -230,6 +236,13 @@
           <button class="device-choice" type="button" data-device="vr" aria-pressed="false">VR HEADSET<br>Head + controllers</button>
         </div>
       </div>
+      <div class="location-picker">
+        <p class="device-question">Where do you want to start?</p>
+        <div class="location-options" role="group" aria-label="Choose starting room">
+          <button class="location-choice selected" type="button" data-start-location="cage" aria-pressed="true">START IN CAGE<br>Begin the escape tasks</button>
+          <button class="location-choice" type="button" data-start-location="secret" aria-pressed="false">SECRET ROOM<br>Skins and every level</button>
+        </div>
+      </div>
       <div class="multiplayer-picker">
         <p class="device-question">How do you want to play?</p>
         <div class="mode-options" role="group" aria-label="Choose multiplayer mode">
@@ -265,6 +278,7 @@
     const state = {
       started: false,
       device: "",
+      startLocation: "cage",
       sound: true,
       runMeters: 0,
       sunflower: false,
@@ -1375,6 +1389,16 @@
         mobile: "Phone / tablet: left joystick moves · swipe the world to look · DO IT interacts",
         vr: "VR: turn your head to look · thumbstick moves · controller Select interacts",
       };
+      const selectStartLocation = (location) => {
+        state.startLocation = location === "secret" ? "secret" : "cage";
+        document.querySelectorAll(".location-choice").forEach((button) => {
+          const selected = button.dataset.startLocation === state.startLocation;
+          button.classList.toggle("selected", selected); button.setAttribute("aria-pressed", String(selected));
+        });
+        save(false);
+      };
+      document.querySelectorAll(".location-choice").forEach((button) => button.addEventListener("click", () => selectStartLocation(button.dataset.startLocation)));
+      selectStartLocation(state.startLocation);
       const selectDevice = (device) => {
         if (!deviceHelp[device]) return;
         state.device = device; document.body.dataset.device = device;
@@ -1394,8 +1418,9 @@
           setRoomStatus(multiplayer.mode === "host" ? "Wait a moment while the room is created." : "Join the room successfully before starting.");
           return;
         }
+        teleportTo(state.startLocation, false);
         state.started = true; save(); $("#startScreen").classList.add("hidden");
-        showToast(multiplayer.mode === "solo" ? (state.device === "vr" ? "Press ENTER VR, then turn your head and use the thumbstick." : state.device === "mobile" ? "Use the joystick to move and swipe to turn Toast's head." : "Use WASD to move and drag the mouse to turn Toast's head.") : "Multiplayer ready! Find your friends and complete tasks together.", 3600);
+        showToast(state.startLocation === "secret" ? "Welcome to the Secret Room! Choose a skin or enter any level portal." : multiplayer.mode === "solo" ? (state.device === "vr" ? "Press ENTER VR, then turn your head and use the thumbstick." : state.device === "mobile" ? "Use the joystick to move and swipe to turn Toast's head." : "Use WASD to move and drag the mouse to turn Toast's head.") : "Multiplayer ready! Find your friends and complete tasks together.", 3600);
       });
       $("#howButton").addEventListener("click", () => { $("#helpText").textContent = state.device ? deviceHelp[state.device] : "Choose Computer, Phone / Tablet, or VR Headset. The game will show the right controls."; });
       $("#soundButton").addEventListener("click", () => { state.sound = !state.sound; $("#soundButton").textContent = state.sound ? "♫" : "×"; showToast(state.sound ? "Tiny sounds on." : "Tiny sounds off.", 1200); save(); });
