@@ -131,18 +131,35 @@
     .device-choice { min-height: 51px; padding: 9px 6px; border: 1px solid rgba(255,255,255,.13); border-radius: 11px; color: #c9bab0; background: rgba(255,255,255,.045); font-size: 9px; font-weight: 900; line-height: 1.25; transition: border-color .2s, background .2s, transform .2s; }
     .device-choice:hover { transform: translateY(-1px); }
     .device-choice.selected { border-color: var(--peach); color: #2d2224; background: var(--peach); box-shadow: 0 7px 18px rgba(233,121,89,.18); }
+    .multiplayer-picker { margin: 0 0 18px; padding: 13px; border: 1px solid rgba(147,215,186,.16); border-radius: 17px; background: rgba(147,215,186,.035); }
+    .mode-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+    .mode-choice { min-height: 40px; padding: 8px 6px; border: 1px solid rgba(255,255,255,.13); border-radius: 11px; color: #c9bab0; background: rgba(255,255,255,.045); font-size: 9px; font-weight: 900; line-height: 1.2; transition: border-color .2s, background .2s, transform .2s; }
+    .mode-choice:hover { transform: translateY(-1px); }
+    .mode-choice.selected { border-color: var(--mint); color: #1c2c28; background: var(--mint); box-shadow: 0 7px 18px rgba(147,215,186,.16); }
+    .multiplayer-row { display: flex; gap: 7px; align-items: stretch; margin-top: 9px; }
+    .room-input { min-width: 0; flex: 1; padding: 10px 11px; border: 1px solid rgba(255,255,255,.15); border-radius: 10px; color: #fff4df; background: rgba(15,14,20,.45); outline: none; font: 900 13px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .16em; text-transform: uppercase; }
+    .room-input:focus { border-color: var(--mint); }
+    .room-action { padding: 9px 12px; border-radius: 10px; color: #1c2c28; background: var(--mint); font-size: 9px; font-weight: 900; }
+    .room-code-display { flex: 1; display: grid; place-items: center; border: 1px dashed rgba(147,215,186,.35); border-radius: 10px; color: var(--mint); background: rgba(147,215,186,.06); font: 900 16px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .17em; }
+    .room-status { min-height: 14px; margin: 9px 0 0; color: #a99b94; font-size: 9px; line-height: 1.45; }
+    .online-pill { color: var(--mint); }
+    .online-pill.offline { color: #b9aaa2; }
+    .online-pill.offline::before { background: #8f8380; box-shadow: 0 0 0 4px rgba(143,131,128,.12); }
+    .online-pill.connecting { color: var(--sun); }
+    .online-pill.connecting::before { background: var(--sun); box-shadow: 0 0 0 4px rgba(255,210,114,.12); animation: pulse 1s ease-in-out infinite; }
     .start-foot { margin: 17px 0 0; color: #8e7f79; font-size: 9px; }
     body[data-device="mobile"] .mobile-controls { display: flex; }
     body[data-device="mobile"] .prompt { bottom: 116px; }
     body[data-device="vr"] .vr-button.available { color: #211c2b; background: #c7a5ff; }
     .hidden { display: none !important; }
     @keyframes bob { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-8px) rotate(1deg); } }
+    @keyframes pulse { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
 
     @media (max-width: 760px) {
       .hud-card { top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); padding: 8px 10px; border-radius: 14px; }
       .mark { width: 29px; height: 29px; border-radius: 10px; }.mark::before, .mark::after { width: 10px; height: 10px; top: 5px; border-width: 2px; }.mark::before { left: 4px; }.mark::after { right: 4px; }.mark span { width: 18px; height: 14px; left: 6px; bottom: 4px; }
       .brand-kicker { font-size: 7px; }.brand-name { font-size: 13px; }.player-tag { display: none; }
-      .status-row { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); gap: 5px; }.status-pill { display: none; }.vr-button { padding: 9px; font-size: 9px; }.sound-button { width: 34px; height: 34px; }
+      .status-row { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); gap: 5px; }.status-pill { display: none; }.status-pill.online-pill { display: inline-block; max-width: 116px; overflow: hidden; padding: 9px; text-overflow: ellipsis; white-space: nowrap; }.vr-button { padding: 9px; font-size: 9px; }.sound-button { width: 34px; height: 34px; }
       .task-panel { top: 72px; right: max(12px, env(safe-area-inset-right)); width: min(220px, calc(100vw - 24px)); padding: 11px; border-radius: 16px; }.task-title { margin-bottom: 8px; }.task-title h2 { font-size: 15px; }.task { gap: 7px; padding: 7px 8px; }.task-name { font-size: 9px; }.task-detail { font-size: 8px; }.task-check { width: 17px; height: 17px; font-size: 10px; }
       .prompt { bottom: 116px; }
     }
@@ -150,6 +167,7 @@
       .task-panel { width: 196px; }.task-list { max-height: 218px; overflow-y: auto; }.start-card { padding: 23px; border-radius: 23px; }.start-art { height: 125px; }.start-actions { flex-direction: column; }.start-foot { line-height: 1.45; }
       .device-options { grid-template-columns: 1fr; }
       .device-choice { min-height: 40px; }
+      .mode-choice { font-size: 8px; }
     }
     @media (orientation: portrait) and (max-width: 760px) {
       .orientation-note { display: block; position: fixed; left: 50%; bottom: 14px; z-index: 8; padding: 8px 11px; border: 1px solid rgba(255,244,223,.15); border-radius: 10px; color: #dbc8b9; background: rgba(25,21,29,.8); transform: translateX(-50%); font-size: 9px; pointer-events: none; }
@@ -170,6 +188,7 @@
     </div>
 
     <div class="status-row">
+      <div class="status-pill online-pill offline" id="onlineStatus">SOLO</div>
       <div class="status-pill" id="levelLabel">LEVEL 1 · CAGE</div>
       <button class="vr-button" id="vrButton" type="button">ENTER VR</button>
       <button class="sound-button" id="soundButton" type="button" aria-label="Toggle sounds">♫</button>
@@ -211,6 +230,23 @@
           <button class="device-choice" type="button" data-device="vr" aria-pressed="false">VR HEADSET<br>Head + controllers</button>
         </div>
       </div>
+      <div class="multiplayer-picker">
+        <p class="device-question">How do you want to play?</p>
+        <div class="mode-options" role="group" aria-label="Choose multiplayer mode">
+          <button class="mode-choice selected" type="button" data-multiplayer="solo" aria-pressed="true">SOLO</button>
+          <button class="mode-choice" type="button" data-multiplayer="host" aria-pressed="false">CREATE ROOM</button>
+          <button class="mode-choice" type="button" data-multiplayer="join" aria-pressed="false">JOIN ROOM</button>
+        </div>
+        <div class="multiplayer-row hidden" id="joinRoomRow">
+          <input class="room-input" id="roomCodeInput" type="text" maxlength="6" inputmode="text" autocomplete="off" spellcheck="false" placeholder="ROOM CODE" aria-label="Multiplayer room code">
+          <button class="room-action" id="joinRoomButton" type="button">JOIN</button>
+        </div>
+        <div class="multiplayer-row hidden" id="hostRoomRow">
+          <strong class="room-code-display" id="roomCodeDisplay">------</strong>
+          <button class="room-action" id="copyRoomButton" type="button">COPY CODE</button>
+        </div>
+        <p class="room-status" id="roomStatus">Solo adventure. Choose Create Room to invite friends.</p>
+      </div>
       <div class="start-actions"><button class="start-button primary" id="startButton" type="button" disabled>SELECT A DEVICE</button><button class="start-button secondary" id="howButton" type="button">HOW TO PLAY</button></div>
       <p class="start-foot" id="helpText">WASD / arrows to move · mouse-drag or finger-swipe to look · Space to interact</p>
     </section>
@@ -218,6 +254,7 @@
 
   <script type="module">
     import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js";
+    import { Peer } from "https://cdn.jsdelivr.net/npm/peerjs@1.5.5/+esm";
 
     const canvas = document.querySelector("#game");
     const $ = (selector) => document.querySelector(selector);
@@ -262,9 +299,15 @@
     let toastTimerId;
     let toastAudio;
     let gamepadInteractHeld = false;
+    const multiplayer = {
+      mode: "solo", peer: null, host: false, ready: false, roomCode: "", playerCount: 1,
+      connections: new Map(), remoteAvatars: new Map(), remotePackets: new Map(), sendTimer: 0,
+    };
+    const sharedWorldKeys = ["sunflower", "nest", "treat", "nightLight", "keyFound", "escaped", "outsideEntered", "metBoy", "momReady", "atCar"];
 
-    function save() {
+    function save(syncNetwork = true) {
       try { localStorage.setItem(saveKey, JSON.stringify(state)); } catch (error) { /* local storage can be disabled */ }
+      if (syncNetwork && multiplayer.ready) syncWorldState();
     }
 
     function load() {
@@ -280,6 +323,296 @@
       toast.classList.add("visible");
       clearTimeout(toastTimerId);
       toastTimerId = setTimeout(() => toast.classList.remove("visible"), duration);
+    }
+
+    function getSharedWorldState() {
+      const snapshot = { runMeters: Math.round(state.runMeters * 10) / 10 };
+      sharedWorldKeys.forEach((key) => { snapshot[key] = Boolean(state[key]); });
+      return snapshot;
+    }
+
+    function applySharedWorldState(snapshot) {
+      if (!snapshot || typeof snapshot !== "object") return;
+      const runMeters = Number(snapshot.runMeters);
+      if (Number.isFinite(runMeters)) state.runMeters = Math.max(state.runMeters, clamp(runMeters, 0, 300));
+      sharedWorldKeys.forEach((key) => { if (snapshot[key]) state[key] = true; });
+      if (sunflowerGroup && state.sunflower) { sunflowerGroup.scale.set(.35, .35, .35); sunflowerGroup.position.y = .1; }
+      if (keyGroup) keyGroup.visible = !state.keyFound;
+      updateLantern();
+      save(false);
+      updateUI();
+    }
+
+    function sendOpen(connection, message) {
+      try { if (connection?.open) connection.send(message); } catch (error) { /* connection may be closing */ }
+    }
+
+    function sendToAll(message, exceptPeer = "") {
+      multiplayer.connections.forEach((connection, peerId) => {
+        if (peerId !== exceptPeer) sendOpen(connection, message);
+      });
+    }
+
+    function sendToHost(message) {
+      const hostConnection = Array.from(multiplayer.connections.values()).find((connection) => connection.open);
+      sendOpen(hostConnection, message);
+    }
+
+    function syncWorldState() {
+      if (!multiplayer.ready) return;
+      const message = { type: "world", world: getSharedWorldState() };
+      if (multiplayer.host) sendToAll(message);
+      else sendToHost(message);
+    }
+
+    function setMultiplayerStatus(text, stateName = "offline") {
+      const pill = $("#onlineStatus");
+      pill.textContent = text;
+      pill.classList.toggle("offline", stateName === "offline");
+      pill.classList.toggle("connecting", stateName === "connecting");
+    }
+
+    function setRoomStatus(message) { $("#roomStatus").textContent = message; }
+
+    function updatePlayerCount(count = multiplayer.playerCount) {
+      multiplayer.playerCount = Math.max(1, Number(count) || 1);
+      if (multiplayer.mode === "host") {
+        setMultiplayerStatus(`ROOM ${multiplayer.roomCode} · ${multiplayer.playerCount}`, multiplayer.ready ? "online" : "connecting");
+        setRoomStatus(multiplayer.ready ? `Room ${multiplayer.roomCode} is ready · ${multiplayer.playerCount}/6 hamsters connected.` : "Creating your room...");
+      } else if (multiplayer.mode === "join") {
+        setMultiplayerStatus(multiplayer.ready ? `ONLINE · ${multiplayer.playerCount}` : "JOINING...", multiplayer.ready ? "online" : "connecting");
+        if (multiplayer.ready) setRoomStatus(`Connected to room ${multiplayer.roomCode} · ${multiplayer.playerCount} hamsters.`);
+      } else {
+        setMultiplayerStatus("SOLO", "offline");
+      }
+    }
+
+    function makeNameSprite(label) {
+      const labelCanvas = document.createElement("canvas"); labelCanvas.width = 256; labelCanvas.height = 64;
+      const context = labelCanvas.getContext("2d");
+      context.fillStyle = "rgba(26,22,32,.82)"; context.fillRect(3, 5, 250, 54);
+      context.fillStyle = "#fff4df"; context.font = "900 25px system-ui, sans-serif"; context.textAlign = "center"; context.textBaseline = "middle"; context.fillText(label, 128, 32);
+      const texture = new THREE.CanvasTexture(labelCanvas); texture.colorSpace = THREE.SRGBColorSpace;
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false }));
+      sprite.position.set(0, 1.34, 0); sprite.scale.set(.95, .24, 1); return sprite;
+    }
+
+    function createRemoteHamster(peerId, skinName = "honey") {
+      const colors = { honey: 0xcb795e, snow: 0xeee4d4, midnight: 0x51465f };
+      const furMaterial = makeMaterial(colors[skinName] ?? colors.honey, .75);
+      const group = new THREE.Group(); group.name = `remote-${peerId}`; scene.add(group);
+      const furParts = [];
+      const add = (geometry, material, x, y, z, scale = [1, 1, 1]) => {
+        const mesh = new THREE.Mesh(geometry, material); mesh.position.set(x, y, z); mesh.scale.set(...scale); mesh.castShadow = true; group.add(mesh); return mesh;
+      };
+      furParts.push(add(new THREE.SphereGeometry(.38, 14, 10), furMaterial, 0, .48, .03, [1, 1.12, 1.05]));
+      furParts.push(add(new THREE.SphereGeometry(.32, 14, 10), furMaterial, 0, .82, -.2));
+      furParts.push(add(new THREE.SphereGeometry(.14, 10, 8), furMaterial, -.23, 1.04, -.16));
+      furParts.push(add(new THREE.SphereGeometry(.14, 10, 8), furMaterial, .23, 1.04, -.16));
+      add(new THREE.SphereGeometry(.22, 12, 8), makeMaterial(0xf3d1b1, .82), 0, .72, -.48, [1.1, .9, .45]);
+      add(new THREE.SphereGeometry(.04, 7, 6), makeMaterial(0x241f28, .55), -.12, .88, -.49);
+      add(new THREE.SphereGeometry(.04, 7, 6), makeMaterial(0x241f28, .55), .12, .88, -.49);
+      add(new THREE.SphereGeometry(.05, 7, 6), makeMaterial(0x7c4540, .65), 0, .76, -.58);
+      group.add(makeNameSprite("FRIEND"));
+      group.userData = {
+        furParts, targetPosition: new THREE.Vector3(), targetYaw: 0, lastSeen: Date.now(), location: "cage",
+      };
+      multiplayer.remoteAvatars.set(peerId, group);
+      return group;
+    }
+
+    function removeRemoteHamster(peerId) {
+      const avatar = multiplayer.remoteAvatars.get(peerId);
+      if (avatar) scene.remove(avatar);
+      multiplayer.remoteAvatars.delete(peerId);
+      multiplayer.remotePackets.delete(peerId);
+    }
+
+    function sanitizePlayerPacket(packet, forcedId = "") {
+      if (!packet || typeof packet !== "object") return null;
+      const x = Number(packet.x); const z = Number(packet.z); const yaw = Number(packet.yaw);
+      if (![x, z, yaw].every(Number.isFinite)) return null;
+      const id = String(forcedId || packet.id || "").slice(0, 72);
+      if (!id || id === multiplayer.peer?.id) return null;
+      const location = Object.hasOwn(levels, packet.location) ? packet.location : "cage";
+      const skin = ["honey", "snow", "midnight"].includes(packet.skin) ? packet.skin : "honey";
+      return { type: "player", id, x: clamp(x, -7, 103), z: clamp(z, -8, 6), yaw, location, skin };
+    }
+
+    function updateRemotePlayer(packet) {
+      const clean = sanitizePlayerPacket(packet);
+      if (!clean) return;
+      multiplayer.remotePackets.set(clean.id, clean);
+      const avatar = multiplayer.remoteAvatars.get(clean.id) ?? createRemoteHamster(clean.id, clean.skin);
+      avatar.userData.targetPosition.set(clean.x, 0, clean.z);
+      avatar.userData.targetYaw = clean.yaw;
+      avatar.userData.location = clean.location;
+      avatar.userData.lastSeen = Date.now();
+      avatar.visible = clean.location === state.location;
+      const colors = { honey: 0xcb795e, snow: 0xeee4d4, midnight: 0x51465f };
+      avatar.userData.furParts.forEach((part) => part.material.color.setHex(colors[clean.skin]));
+    }
+
+    function localPlayerPacket() {
+      let yaw = player.yaw;
+      if (renderer?.xr.isPresenting) {
+        const direction = new THREE.Vector3(); renderer.xr.getCamera(camera).getWorldDirection(direction);
+        yaw = Math.atan2(direction.x, -direction.z);
+      }
+      return { type: "player", id: multiplayer.peer?.id ?? "", x: rig.position.x, z: rig.position.z, yaw, location: state.location, skin: state.skin };
+    }
+
+    function broadcastPresence() {
+      if (!multiplayer.host) return;
+      const count = 1 + Array.from(multiplayer.connections.values()).filter((connection) => connection.open).length;
+      updatePlayerCount(count);
+      sendToAll({ type: "presence", count });
+    }
+
+    function handleNetworkData(connection, data) {
+      if (!data || typeof data !== "object") return;
+      if (data.type === "welcome") {
+        applySharedWorldState(data.world);
+        (Array.isArray(data.players) ? data.players : []).forEach(updateRemotePlayer);
+        updatePlayerCount(data.count);
+        return;
+      }
+      if (data.type === "player") {
+        const packet = multiplayer.host ? sanitizePlayerPacket(data, connection.peer) : sanitizePlayerPacket(data);
+        if (!packet) return;
+        updateRemotePlayer(packet);
+        if (multiplayer.host) sendToAll(packet, connection.peer);
+        return;
+      }
+      if (data.type === "world") {
+        applySharedWorldState(data.world);
+        if (multiplayer.host) sendToAll({ type: "world", world: getSharedWorldState() }, connection.peer);
+        return;
+      }
+      if (data.type === "presence" && !multiplayer.host) { updatePlayerCount(data.count); return; }
+      if (data.type === "leave") removeRemoteHamster(String(data.id || ""));
+    }
+
+    function registerMultiplayerConnection(connection, incomingToHost = false) {
+      if (incomingToHost && multiplayer.connections.size >= 5) {
+        connection.on("open", () => { sendOpen(connection, { type: "room-full" }); connection.close(); });
+        return;
+      }
+      multiplayer.connections.set(connection.peer, connection);
+      connection.on("open", () => {
+        if (multiplayer.host) {
+          sendOpen(connection, {
+            type: "welcome", world: getSharedWorldState(), count: multiplayer.playerCount,
+            players: [localPlayerPacket(), ...multiplayer.remotePackets.values()],
+          });
+          broadcastPresence();
+          showToast("A friend joined your hamster room!", 3000);
+        } else {
+          multiplayer.ready = true; updatePlayerCount(2);
+          const peerSeed = Array.from(multiplayer.peer?.id ?? "").reduce((sum, character) => sum + character.charCodeAt(0), 0);
+          const spawnOffset = (peerSeed % 2 ? 1 : -1) * (1.35 + (peerSeed % 3) * .28);
+          applyPlayerMovement(spawnOffset, -2.05);
+          sendOpen(connection, localPlayerPacket());
+          sendOpen(connection, { type: "world", world: getSharedWorldState() });
+          showToast(`Joined room ${multiplayer.roomCode}!`, 3000);
+        }
+      });
+      connection.on("data", (data) => {
+        if (data?.type === "room-full") {
+          setRoomStatus("That room is full. Ask the host for a new room.");
+          setMultiplayerStatus("ROOM FULL", "offline");
+          return;
+        }
+        handleNetworkData(connection, data);
+      });
+      connection.on("close", () => {
+        multiplayer.connections.delete(connection.peer);
+        removeRemoteHamster(connection.peer);
+        if (multiplayer.host) {
+          sendToAll({ type: "leave", id: connection.peer });
+          broadcastPresence();
+        } else {
+          multiplayer.ready = false; updatePlayerCount(1);
+          setRoomStatus("Disconnected from the host. Press JOIN to reconnect.");
+          setMultiplayerStatus("OFFLINE", "offline");
+        }
+      });
+      connection.on("error", () => setRoomStatus("A friend connection had a network problem."));
+    }
+
+    function resetMultiplayerConnection() {
+      multiplayer.connections.forEach((connection) => { try { connection.close(); } catch (error) { /* already closed */ } });
+      multiplayer.connections.clear();
+      try { multiplayer.peer?.destroy(); } catch (error) { /* already destroyed */ }
+      multiplayer.peer = null; multiplayer.host = false; multiplayer.ready = false; multiplayer.roomCode = ""; multiplayer.playerCount = 1;
+      Array.from(multiplayer.remoteAvatars.keys()).forEach(removeRemoteHamster);
+    }
+
+    function generateRoomCode() {
+      const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let code = ""; for (let i = 0; i < 6; i++) code += alphabet[Math.floor(Math.random() * alphabet.length)];
+      return code;
+    }
+
+    function normalizeRoomCode(value) { return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6); }
+
+    function hostMultiplayerRoom() {
+      resetMultiplayerConnection();
+      multiplayer.mode = "host"; multiplayer.host = true; multiplayer.roomCode = generateRoomCode();
+      $("#roomCodeDisplay").textContent = multiplayer.roomCode;
+      setMultiplayerStatus("CREATING...", "connecting"); setRoomStatus("Creating your private hamster room...");
+      try {
+        multiplayer.peer = new Peer(`iamhamster-${multiplayer.roomCode}`, { debug: 0 });
+        multiplayer.peer.on("open", () => {
+          multiplayer.ready = true; updatePlayerCount(1);
+          showToast(`Room ${multiplayer.roomCode} is ready. Share the code!`, 3600);
+        });
+        multiplayer.peer.on("connection", (connection) => registerMultiplayerConnection(connection, true));
+        multiplayer.peer.on("error", (error) => {
+          multiplayer.ready = false; setMultiplayerStatus("ROOM ERROR", "offline");
+          setRoomStatus(error?.type === "unavailable-id" ? "That code was busy. Press CREATE ROOM again." : "Could not create the room. Check the internet and try again.");
+        });
+      } catch (error) {
+        setMultiplayerStatus("NOT SUPPORTED", "offline"); setRoomStatus("This browser cannot start multiplayer.");
+      }
+    }
+
+    function joinMultiplayerRoom(roomCode) {
+      const code = normalizeRoomCode(roomCode);
+      if (code.length !== 6) { setRoomStatus("Enter the host's 6-character room code."); return; }
+      resetMultiplayerConnection();
+      multiplayer.mode = "join"; multiplayer.roomCode = code;
+      setMultiplayerStatus("JOINING...", "connecting"); setRoomStatus(`Looking for room ${code}...`);
+      try {
+        multiplayer.peer = new Peer({ debug: 0 });
+        multiplayer.peer.on("open", () => {
+          const connection = multiplayer.peer.connect(`iamhamster-${code}`, { serialization: "json", reliable: false });
+          registerMultiplayerConnection(connection, false);
+        });
+        multiplayer.peer.on("error", (error) => {
+          multiplayer.ready = false; setMultiplayerStatus("NOT CONNECTED", "offline");
+          setRoomStatus(error?.type === "peer-unavailable" ? `Room ${code} was not found. Check the code and try again.` : "Could not join. Check the internet and try again.");
+        });
+      } catch (error) {
+        setMultiplayerStatus("NOT SUPPORTED", "offline"); setRoomStatus("This browser cannot join multiplayer.");
+      }
+    }
+
+    function updateMultiplayer(dt) {
+      multiplayer.remoteAvatars.forEach((avatar, peerId) => {
+        avatar.visible = avatar.userData.location === state.location;
+        avatar.position.lerp(avatar.userData.targetPosition, Math.min(1, dt * 12));
+        const angleDelta = Math.atan2(Math.sin(avatar.userData.targetYaw - avatar.rotation.y), Math.cos(avatar.userData.targetYaw - avatar.rotation.y));
+        avatar.rotation.y += angleDelta * Math.min(1, dt * 12);
+        if (Date.now() - avatar.userData.lastSeen > 20000) removeRemoteHamster(peerId);
+      });
+      if (!multiplayer.ready) return;
+      multiplayer.sendTimer -= dt;
+      if (multiplayer.sendTimer > 0) return;
+      multiplayer.sendTimer = .08;
+      const packet = localPlayerPacket();
+      if (multiplayer.host) sendToAll(packet);
+      else sendToHost(packet);
     }
 
     function makeMaterial(color, roughness = .8, metalness = 0) {
@@ -970,7 +1303,46 @@
       $("#dayNumber").textContent = String(state.day).padStart(2, "0");
     }
 
+    function setupMultiplayerUI() {
+      const modeButtons = document.querySelectorAll(".mode-choice");
+      const selectMode = (mode) => {
+        modeButtons.forEach((button) => {
+          const selected = button.dataset.multiplayer === mode;
+          button.classList.toggle("selected", selected); button.setAttribute("aria-pressed", String(selected));
+        });
+        $("#joinRoomRow").classList.toggle("hidden", mode !== "join");
+        $("#hostRoomRow").classList.toggle("hidden", mode !== "host");
+        if (mode === "solo") {
+          resetMultiplayerConnection(); multiplayer.mode = "solo";
+          setRoomStatus("Solo adventure. Choose Create Room to invite friends."); updatePlayerCount(1);
+        } else if (mode === "host") {
+          hostMultiplayerRoom();
+        } else {
+          resetMultiplayerConnection(); multiplayer.mode = "join";
+          setMultiplayerStatus("ENTER CODE", "connecting"); setRoomStatus("Enter the host's 6-character room code, then press JOIN.");
+          $("#roomCodeInput").focus();
+        }
+      };
+      modeButtons.forEach((button) => button.addEventListener("click", () => selectMode(button.dataset.multiplayer)));
+      $("#roomCodeInput").addEventListener("input", (event) => { event.target.value = normalizeRoomCode(event.target.value); });
+      $("#roomCodeInput").addEventListener("keydown", (event) => {
+        if (event.key === "Enter") { event.preventDefault(); joinMultiplayerRoom(event.currentTarget.value); }
+      });
+      $("#joinRoomButton").addEventListener("click", () => joinMultiplayerRoom($("#roomCodeInput").value));
+      $("#copyRoomButton").addEventListener("click", async () => {
+        if (!multiplayer.roomCode) return;
+        try {
+          await navigator.clipboard.writeText(multiplayer.roomCode);
+          setRoomStatus(`Room code ${multiplayer.roomCode} copied. Send it to your friends!`);
+        } catch (error) {
+          setRoomStatus(`Share this room code with your friends: ${multiplayer.roomCode}`);
+        }
+      });
+      window.addEventListener("beforeunload", () => { try { multiplayer.peer?.destroy(); } catch (error) { /* page is closing */ } });
+    }
+
     function setupInput() {
+      setupMultiplayerUI();
       window.addEventListener("keydown", (event) => { keys.add(event.code); if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code)) event.preventDefault(); if (event.code === "Space" && !event.repeat) tryInteract(); });
       window.addEventListener("keyup", (event) => keys.delete(event.code));
       let lastX = 0, lastY = 0, looking = false, lookPointer = null;
@@ -1018,8 +1390,12 @@
       if (state.device) selectDevice(state.device);
       $("#startButton").addEventListener("click", () => {
         if (!state.device) { showToast("Choose your device first."); return; }
+        if (multiplayer.mode !== "solo" && !multiplayer.ready) {
+          setRoomStatus(multiplayer.mode === "host" ? "Wait a moment while the room is created." : "Join the room successfully before starting.");
+          return;
+        }
         state.started = true; save(); $("#startScreen").classList.add("hidden");
-        showToast(state.device === "vr" ? "Press ENTER VR, then turn your head and use the thumbstick." : state.device === "mobile" ? "Use the joystick to move and swipe to turn Toast's head." : "Use WASD to move and drag the mouse to turn Toast's head.", 3600);
+        showToast(multiplayer.mode === "solo" ? (state.device === "vr" ? "Press ENTER VR, then turn your head and use the thumbstick." : state.device === "mobile" ? "Use the joystick to move and swipe to turn Toast's head." : "Use WASD to move and drag the mouse to turn Toast's head.") : "Multiplayer ready! Find your friends and complete tasks together.", 3600);
       });
       $("#howButton").addEventListener("click", () => { $("#helpText").textContent = state.device ? deviceHelp[state.device] : "Choose Computer, Phone / Tablet, or VR Headset. The game will show the right controls."; });
       $("#soundButton").addEventListener("click", () => { state.sound = !state.sound; $("#soundButton").textContent = state.sound ? "♫" : "×"; showToast(state.sound ? "Tiny sounds on." : "Tiny sounds off.", 1200); save(); });
@@ -1049,7 +1425,7 @@
     function onResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight, false); }
 
     function animate() {
-      const dt = Math.min(clock.getDelta(), .05); if (!renderer.xr.isPresenting) { updateMovement(dt); camera.rotation.set(player.pitch, player.yaw, 0, "YXZ"); } else updateVRMovement(dt); updateWheel(dt); updateDoor(dt); updateOutsideCharacters(dt); updatePrompt(); updateUI();
+      const dt = Math.min(clock.getDelta(), .05); if (!renderer.xr.isPresenting) { updateMovement(dt); camera.rotation.set(player.pitch, player.yaw, 0, "YXZ"); } else updateVRMovement(dt); updateWheel(dt); updateDoor(dt); updateOutsideCharacters(dt); updateMultiplayer(dt); updatePrompt(); updateUI();
       renderer.render(scene, camera);
     }
 
