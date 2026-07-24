@@ -726,6 +726,23 @@
       teleportTo(playableLevelOrder[currentIndex - 1]);
     }
 
+    function goUpLevel() {
+      if (state.location === "secret") {
+        teleportTo("cage");
+        return;
+      }
+      const currentIndex = playableLevelOrder.indexOf(state.location);
+      if (currentIndex < 0) {
+        teleportTo("cage");
+        return;
+      }
+      if (currentIndex >= playableLevelOrder.length - 1) {
+        showToast("You are already on Level 4: Snack Lab.");
+        return;
+      }
+      teleportTo(playableLevelOrder[currentIndex + 1]);
+    }
+
     function applySkin(skinName = state.skin) {
       const skins = { honey: 0xcb795e, snow: 0xeee4d4, midnight: 0x51465f };
       state.skin = skinName in skins ? skinName : "honey";
@@ -1373,7 +1390,14 @@
 
     function setupInput() {
       setupMultiplayerUI();
-      window.addEventListener("keydown", (event) => { keys.add(event.code); if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code)) event.preventDefault(); if (event.code === "Space" && !event.repeat) tryInteract(); if (event.code === "KeyQ" && !event.repeat && !(event.target instanceof HTMLInputElement)) goDownLevel(); });
+      window.addEventListener("keydown", (event) => {
+        keys.add(event.code);
+        if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code)) event.preventDefault();
+        if (event.code === "Space" && !event.repeat) tryInteract();
+        const isTyping = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement;
+        if (event.code === "KeyQ" && !event.repeat && !isTyping) goDownLevel();
+        if (["Digit9", "Numpad9"].includes(event.code) && !event.repeat && !isTyping) goUpLevel();
+      });
       window.addEventListener("keyup", (event) => keys.delete(event.code));
       let lastX = 0, lastY = 0, looking = false, lookPointer = null;
       const stopLooking = (event) => {
