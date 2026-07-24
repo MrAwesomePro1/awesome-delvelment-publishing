@@ -43,7 +43,7 @@
     .paw.left { left: 24px; transform: rotate(14deg); }.paw.right { right: 24px; transform: rotate(-14deg); }
     body.in-vr .paw-view { display: none; }
     .hud { position: fixed; inset: 0; z-index: 4; pointer-events: none; }
-    .hud-card, .task-panel, .prompt, .vr-button, .sound-button, .mobile-button, .joystick { pointer-events: auto; }
+    .hud-card, .task-panel, .prompt, .vr-button, .level-button, .sound-button, .mobile-button, .joystick { pointer-events: auto; }
     .hud-card {
       position: absolute; top: max(18px, env(safe-area-inset-top)); left: max(18px, env(safe-area-inset-left));
       display: flex; gap: 12px; align-items: center; padding: 11px 14px; border: 1px solid var(--glass-line);
@@ -59,12 +59,13 @@
     .player-tag { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
 
     .status-row { position: absolute; top: max(18px, env(safe-area-inset-top)); right: max(18px, env(safe-area-inset-right)); display: flex; gap: 8px; align-items: center; }
-    .status-pill, .sound-button, .vr-button { padding: 10px 12px; border: 1px solid var(--glass-line); border-radius: 13px; background: var(--glass); backdrop-filter: blur(14px); }
+    .status-pill, .sound-button, .vr-button, .level-button { padding: 10px 12px; border: 1px solid var(--glass-line); border-radius: 13px; background: var(--glass); backdrop-filter: blur(14px); }
     .status-pill { color: var(--mint); font: 700 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
     .status-pill::before { content: ""; width: 7px; height: 7px; display: inline-block; margin-right: 7px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 0 4px rgba(147,215,186,.12); }
-    .sound-button, .vr-button { color: #f7e6d0; font-size: 11px; font-weight: 800; transition: transform .2s, background .2s; }
+    .sound-button, .vr-button, .level-button { color: #f7e6d0; font-size: 11px; font-weight: 800; transition: transform .2s, background .2s; }
     .sound-button { width: 38px; height: 38px; padding: 0; font-size: 16px; }
-    .sound-button:hover, .vr-button:hover { background: rgba(255,255,255,.14); transform: translateY(-1px); }
+    .sound-button:hover, .vr-button:hover, .level-button:hover { background: rgba(255,255,255,.14); transform: translateY(-1px); }
+    .level-button { color: #251d2d; background: #c7a5ff; white-space: nowrap; }
     .vr-button { display: none; }
     .vr-button.available { display: inline-block; }
 
@@ -164,7 +165,7 @@
       .hud-card { top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); padding: 8px 10px; border-radius: 14px; }
       .mark { width: 29px; height: 29px; border-radius: 10px; }.mark::before, .mark::after { width: 10px; height: 10px; top: 5px; border-width: 2px; }.mark::before { left: 4px; }.mark::after { right: 4px; }.mark span { width: 18px; height: 14px; left: 6px; bottom: 4px; }
       .brand-kicker { font-size: 7px; }.brand-name { font-size: 13px; }.player-tag { display: none; }
-      .status-row { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); gap: 5px; }.status-pill { display: none; }.status-pill.online-pill { display: inline-block; max-width: 116px; overflow: hidden; padding: 9px; text-overflow: ellipsis; white-space: nowrap; }.vr-button { padding: 9px; font-size: 9px; }.sound-button { width: 34px; height: 34px; }
+      .status-row { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); gap: 5px; }.status-pill { display: none; }.status-pill.online-pill { display: inline-block; max-width: 116px; overflow: hidden; padding: 9px; text-overflow: ellipsis; white-space: nowrap; }.vr-button, .level-button { padding: 9px; font-size: 9px; }.sound-button { width: 34px; height: 34px; }
       .task-panel { top: 72px; right: max(12px, env(safe-area-inset-right)); width: min(220px, calc(100vw - 24px)); padding: 11px; border-radius: 16px; }.task-title { margin-bottom: 8px; }.task-title h2 { font-size: 15px; }.task { gap: 7px; padding: 7px 8px; }.task-name { font-size: 9px; }.task-detail { font-size: 8px; }.task-check { width: 17px; height: 17px; font-size: 10px; }
       .prompt { bottom: 116px; }
     }
@@ -196,6 +197,7 @@
     <div class="status-row">
       <div class="status-pill online-pill offline" id="onlineStatus">SOLO</div>
       <div class="status-pill" id="levelLabel">LEVEL 1 · CAGE</div>
+      <button class="level-button" id="levelDownButton" type="button" aria-label="Go down one level">▼ LEVEL</button>
       <button class="vr-button" id="vrButton" type="button">ENTER VR</button>
       <button class="sound-button" id="soundButton" type="button" aria-label="Toggle sounds">♫</button>
     </div>
@@ -700,6 +702,7 @@
       snack: { x: 72, z: 3.15, label: "LEVEL 4 · SNACK LAB" },
       outside: { x: 96, z: 3.25, label: "LEVEL 2 · OUTSIDE THE CAGE", bounds: { minX: 90.45, maxX: 101.55, minZ: -7.15, maxZ: 4.65 } },
     };
+    const playableLevelOrder = ["cage", "outside", "moon", "snack"];
 
     function teleportTo(levelName, announce = true) {
       const destination = levels[levelName] ?? levels.cage;
@@ -708,6 +711,19 @@
       if (rig) { rig.position.set(destination.x, 0, destination.z); player.yaw = 0; player.pitch = -.02; }
       if (announce) showToast(`Whoosh! ${destination.label.replace(" · ", ": ")}`, 2400);
       save(); updateUI();
+    }
+
+    function goDownLevel() {
+      if (state.location === "secret") {
+        teleportTo("cage");
+        return;
+      }
+      const currentIndex = playableLevelOrder.indexOf(state.location);
+      if (currentIndex <= 0) {
+        showToast("You are already on Level 1: Cage.");
+        return;
+      }
+      teleportTo(playableLevelOrder[currentIndex - 1]);
     }
 
     function applySkin(skinName = state.skin) {
@@ -1357,7 +1373,7 @@
 
     function setupInput() {
       setupMultiplayerUI();
-      window.addEventListener("keydown", (event) => { keys.add(event.code); if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code)) event.preventDefault(); if (event.code === "Space" && !event.repeat) tryInteract(); });
+      window.addEventListener("keydown", (event) => { keys.add(event.code); if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code)) event.preventDefault(); if (event.code === "Space" && !event.repeat) tryInteract(); if (event.code === "KeyQ" && !event.repeat && !(event.target instanceof HTMLInputElement)) goDownLevel(); });
       window.addEventListener("keyup", (event) => keys.delete(event.code));
       let lastX = 0, lastY = 0, looking = false, lookPointer = null;
       const stopLooking = (event) => {
@@ -1378,6 +1394,7 @@
       canvas.addEventListener("dblclick", () => canvas.requestPointerLock?.());
       canvas.addEventListener("contextmenu", (event) => event.preventDefault());
       $("#interactButton").addEventListener("pointerdown", (event) => { event.stopPropagation(); tryInteract(); });
+      $("#levelDownButton").addEventListener("click", goDownLevel);
       $("#dashButton").addEventListener("pointerdown", (event) => { event.stopPropagation(); input.dash = true; });
       $("#dashButton").addEventListener("pointerup", () => input.dash = false); $("#dashButton").addEventListener("pointercancel", () => input.dash = false);
       const joystick = $("#joystick"); const knob = $("#joystickKnob"); let joystickPointer = null;
@@ -1385,9 +1402,9 @@
       joystick.addEventListener("pointerdown", (event) => { event.stopPropagation(); joystickPointer = event.pointerId; joystick.setPointerCapture?.(event.pointerId); moveJoystick(event); });
       joystick.addEventListener("pointermove", moveJoystick); const stopJoystick = () => { joystickPointer = null; input.strafe = 0; input.forward = 0; knob.style.transform = "translate(0, 0)"; }; joystick.addEventListener("pointerup", stopJoystick); joystick.addEventListener("pointercancel", stopJoystick);
       const deviceHelp = {
-        computer: "Computer: WASD / arrows move · mouse-drag looks · Space interacts",
-        mobile: "Phone / tablet: left joystick moves · swipe the world to look · DO IT interacts",
-        vr: "VR: turn your head to look · thumbstick moves · controller Select interacts",
+        computer: "Computer: WASD / arrows move · mouse-drag looks · Space interacts · Q goes down a level",
+        mobile: "Phone / tablet: left joystick moves · swipe to look · DO IT interacts · ▼ LEVEL goes down",
+        vr: "VR: turn your head to look · thumbstick moves · Select interacts · grip goes down a level",
       };
       const selectStartLocation = (location) => {
         state.startLocation = location === "secret" ? "secret" : "cage";
@@ -1443,7 +1460,7 @@
             session.addEventListener("end", () => { player.yaw = rig.rotation.y; rig.rotation.y = 0; camera.rotation.set(player.pitch, player.yaw, 0, "YXZ"); document.body.classList.remove("in-vr"); vrButton.textContent = "ENTER VR"; });
           } catch (error) { rig.rotation.y = 0; showToast("VR could not start on this device."); }
         });
-        const controllerA = renderer.xr.getController(0); const controllerB = renderer.xr.getController(1); controllerA.addEventListener("selectstart", tryInteract); controllerB.addEventListener("selectstart", tryInteract); rig.add(controllerA, controllerB);
+        const controllerA = renderer.xr.getController(0); const controllerB = renderer.xr.getController(1); controllerA.addEventListener("selectstart", tryInteract); controllerB.addEventListener("selectstart", tryInteract); controllerA.addEventListener("squeezestart", goDownLevel); controllerB.addEventListener("squeezestart", goDownLevel); rig.add(controllerA, controllerB);
       } catch (error) { /* WebXR is optional */ }
     }
 
