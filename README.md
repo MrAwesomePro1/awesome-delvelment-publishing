@@ -1,3 +1,3 @@
-﻿# Awesome Delvelment Publishing
+# Awesome Development Publishing
 
-Launcher and app publishing repo for Awesome Delvelment.
+Launcher and app publishing repo for Awesome Development.

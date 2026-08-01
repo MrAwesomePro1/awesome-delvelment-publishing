@@ -823,6 +823,90 @@ h1 {
   background: rgba(255, 204, 77, 0.82);
 }
 
+.wealth-scene {
+  background:
+    radial-gradient(circle at 80% 18%, rgba(255, 253, 248, 0.34), transparent 20%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.24), transparent 42%),
+    #1f6f55;
+}
+
+.wealth-chart {
+  position: absolute;
+  left: 28px;
+  right: 28px;
+  bottom: 34px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: end;
+  gap: 10px;
+  height: 104px;
+  padding: 12px;
+  border: 4px solid #141827;
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.88);
+  box-shadow: 12px 12px 0 rgba(20, 24, 39, 0.18);
+}
+
+.wealth-chart i {
+  display: block;
+  border-radius: 6px 6px 2px 2px;
+  background: #2f9f73;
+  border: 3px solid #141827;
+}
+
+.wealth-chart i:nth-child(1) { height: 28px; }
+.wealth-chart i:nth-child(2) { height: 48px; }
+.wealth-chart i:nth-child(3) { height: 70px; }
+.wealth-chart i:nth-child(4) { height: 88px; }
+
+.wealth-coin {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 4px solid #141827;
+  border-radius: 50%;
+  background: #ffcc4d;
+  color: #141827;
+  font-weight: 900;
+  box-shadow: 0 8px 0 rgba(20, 24, 39, 0.18);
+}
+
+.wealth-coin.one {
+  left: 32px;
+  top: 30px;
+}
+
+.wealth-coin.two {
+  right: 34px;
+  top: 58px;
+  transform: scale(0.82);
+}
+
+.wealth-arrow {
+  position: absolute;
+  left: 78px;
+  top: 58px;
+  width: 96px;
+  height: 40px;
+  border-top: 6px solid #ffcc4d;
+  border-right: 6px solid #ffcc4d;
+  transform: rotate(-18deg);
+}
+
+.wealth-arrow::after {
+  content: "";
+  position: absolute;
+  right: -10px;
+  top: -16px;
+  width: 18px;
+  height: 18px;
+  border-top: 6px solid #ffcc4d;
+  border-right: 6px solid #ffcc4d;
+  transform: rotate(45deg);
+}
+
 .reward-scene {
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.28), transparent 45%),

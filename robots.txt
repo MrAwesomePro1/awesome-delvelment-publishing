@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mrawesomepro1.github.io/awesome-delvelment-publishing/sitemap.xml

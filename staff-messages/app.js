@@ -8,7 +8,7 @@ const rooms = [
     icon: "G",
     color: "#0f766e",
     subtitle: "Daily check-ins",
-    brief: "Daily planning, site decisions, launch timing, and staff updates for Awesome Delvelment.",
+    brief: "Daily planning, site decisions, launch timing, and staff updates for Awesome Development.",
     notice: "Sign in with the staff code before reading or sending messages."
   },
   {
